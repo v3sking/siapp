@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lhy.si.sec.role.mapper.SecRoleCustomMapper">
+  
+  <select id="getRoleByUserId" parameterType="int" resultType="com.lhy.si.sec.role.model.SecRole">
+  		select role.role_id as roleId,role.role_name as roleName
+  		from t_sec_user user,t_sec_role role, t_sec_user_role_rel rel 
+  		where user.id = rel.user_id
+  		and role.role_id = rel.role_id
+  		and rel.user_id = #{userId}
+  		and user.status = 0
+  		and role.status = 0
+  		and rel.status = 0
+  </select>
+</mapper>

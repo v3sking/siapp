@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head th:include="header :: head"> 
+  </head>
+  <script type="text/javascript">
+  		$(function(){
+  			$.ajax({
+  				url:base.getContextPath()+"/user/list",
+  				dataType:"json",
+  				success:function(data){
+  				  	console.log(JSON.stringify(data));
+  				}
+  			});
+  	});
+  </script>
+  <body>
+ 	我是内容
+  </body>
+</html>

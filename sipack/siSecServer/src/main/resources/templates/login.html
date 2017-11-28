@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head th:include="header :: head"/>
+<body>
+	<header>
+		<script type="text/javascript" th:src="@{js/login.js}"></script>
+	</header>
+	<!--   <input type="hidden" id="refer" th:value="${refer}" /> -->
+	<form id="loginForm">
+		账号：<input name="id" type="number"><br> 密码：<input
+			name="password" type="password"><br>
+		<button id="sub" type="button">登陆</button>
+		<button type="button">注册</button>
+	</form>
+</body>
+</html>
