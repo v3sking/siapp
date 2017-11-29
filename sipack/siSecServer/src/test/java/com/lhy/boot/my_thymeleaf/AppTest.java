@@ -65,19 +65,19 @@ public class AppTest {
 		
 	
 	public static void main(String[] args) {
-		RestTemplate r = new RestTemplate();
-		HttpHeaders header = new HttpHeaders();
-		header.add("token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzZWNTZXJ2ZXIiLCJhdWQiOiIxIiwianRpIjoiZDdkNDI3M2E4NWI5NGEyZGE4ZjNiMWJkMDI3M2NjODgiLCJpc3MiOiJzZWNTZXJ2ZXIiLCJpYXQiOjE1MTE2NzE2ODl9.oJnkdH1keD8HliK8D0vlXPLGNVcNx-KB3Ijfn5Fibe4");
-		HttpEntity<String> httpEntity = new HttpEntity<String>("",header);
-		ResponseEntity<byte[]> exchange = r.exchange("http://192.168.0.102:8080/secServer/user/get?id=1", HttpMethod.GET, httpEntity, byte[].class);
-		byte[] body = exchange.getBody();
-		String resString = null;
-		try {
-			resString = new String(body,"utf-8");
-		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
-		}
-		System.out.println(resString);
+//		RestTemplate r = new RestTemplate();
+//		HttpHeaders header = new HttpHeaders();
+//		header.add("token", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzZWNTZXJ2ZXIiLCJhdWQiOiIxIiwianRpIjoiZDdkNDI3M2E4NWI5NGEyZGE4ZjNiMWJkMDI3M2NjODgiLCJpc3MiOiJzZWNTZXJ2ZXIiLCJpYXQiOjE1MTE2NzE2ODl9.oJnkdH1keD8HliK8D0vlXPLGNVcNx-KB3Ijfn5Fibe4");
+//		HttpEntity<String> httpEntity = new HttpEntity<String>("",header);
+//		ResponseEntity<byte[]> exchange = r.exchange("http://192.168.0.102:8080/secServer/user/get?id=1", HttpMethod.GET, httpEntity, byte[].class);
+//		byte[] body = exchange.getBody();
+//		String resString = null;
+//		try {
+//			resString = new String(body,"utf-8");
+//		} catch (UnsupportedEncodingException e) {
+//			throw new RuntimeException(e);
+//		}
+//		System.out.println(resString);
 	}
 	
 	
