@@ -1,0 +1,368 @@
+### Eclipse Workspace Patch 1.0
+#P zzfw-app
+Index: src/main/java/com/wisedu/zzfwclient/i18n/aspect/I18nAspect.java
+===================================================================
+--- src/main/java/com/wisedu/zzfwclient/i18n/aspect/I18nAspect.java	(revision 65101)
++++ src/main/java/com/wisedu/zzfwclient/i18n/aspect/I18nAspect.java	(working copy)
+@@ -16,8 +16,10 @@
+ import org.springframework.beans.factory.annotation.Autowired;
+ import org.springframework.web.servlet.i18n.SessionLocaleResolver;
+ 
++import com.wisedu.zzfw.authorize.service.AuthorizeService;
+ import com.wisedu.zzfw.common.util.BeanUtil;
+ import com.wisedu.zzfw.common.util.ReflectionUtils;
++import com.wisedu.zzfwclient.common.exception.ZzfwClientException;
+ import com.wisedu.zzfwclient.i18n.annotation.I18n;
+ 
+ /**
+@@ -50,6 +52,9 @@
+ 	@Autowired(required=false)
+ 	private HttpServletRequest request;
+ 	
++	@Autowired
++	private AuthorizeService authorizeService;
++	
+ 	public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
+ 		Object retValue = joinPoint.proceed();
+ 		
+@@ -73,6 +78,14 @@
+ 	
+ 	private boolean checkLanguage(){
+ 		setLanguage();
++		
++		//再次确认语言类型是否在授权证书中
++		try{
++			authorizeService.validI18n(language);
++		}catch(Exception e){
++			throw new ZzfwClientException("国际化未授权",e);
++		}
++				
+ 		if (Locale.CHINA.getLanguage().equalsIgnoreCase(language)) {
+ 			return false;
+ 		} else if (Locale.ENGLISH.getLanguage().equalsIgnoreCase(language)) {
+Index: src/main/webapp/views/common/footPage.jsp
+===================================================================
+--- src/main/webapp/views/common/footPage.jsp	(revision 65101)
++++ src/main/webapp/views/common/footPage.jsp	(working copy)
+@@ -32,7 +32,7 @@
+ </style>
+ <div class="row">
+ 	  <!-- 未登录时显示中英文切换 -->
+-	  <div class="footLanguage" style="height:100px;width: 1288px; margin: auto;">
++	  <div class="footLanguage" style="height:100px;width: 1288px; margin: auto;display: none;">
+ 	  	<div style="float:right;position:relative;top:25px;right:100px;width:500px;height:50px;">
+ 		  	 <div id="englishDiv" onclick="changeLanguage('en')" class="unselect">EN<!-- <div style=" position:relative;top: 10px;right: -10px;">EN</div> --></div>
+ 		  	 <div style="margin-right: 10px;" id="chineseDiv" onclick="changeLanguage('zh')" class="selected">中<!-- <div style=" position:relative;top: 10px;right: -13px;">中</div> --></div>
+@@ -60,6 +60,24 @@
+ 	});  */
+ }
+ function initLangBtn(){
++	//获取授权国际化语言类型
++	var authLangs = [];
++	$.ajax({
++		url:"${ctx}/home/getI18n",
++		dataType:"json",
++		async:false,
++		success: function(data){
++			console.log(JSON.stringify(data));
++			if(data.ret == 0){
++				authLangs = data.languages;
++			}
++		}
++	});
++	if(authLangs.length == 0 || authLangs== undefined || authLangs == null){
++		$(".footLanguage").css("display","none");
++	}else{
++		$(".footLanguage").css("display","block");
++	}
+ 	var language ="";
+ 	try{
+ 		language ="${sessionScope.skinName}".split("_")[1];
+Index: src/main/java/com/wisedu/zzfwclient/i18n/interceptor/I18nAuthInterceptor.java
+===================================================================
+--- src/main/java/com/wisedu/zzfwclient/i18n/interceptor/I18nAuthInterceptor.java	(revision 0)
++++ src/main/java/com/wisedu/zzfwclient/i18n/interceptor/I18nAuthInterceptor.java	(working copy)
+@@ -0,0 +1,76 @@
++package com.wisedu.zzfwclient.i18n.interceptor;
++
++import java.util.Properties;
++
++
++import javax.annotation.PostConstruct;
++import javax.servlet.http.HttpServletRequest;
++import javax.servlet.http.HttpServletResponse;
++
++import org.apache.commons.lang.StringUtils;
++import org.apache.shiro.util.AntPathMatcher;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.beans.factory.annotation.Qualifier;
++import org.springframework.beans.factory.annotation.Value;
++import org.springframework.stereotype.Component;
++import org.springframework.web.method.HandlerMethod;
++import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
++
++import com.wisedu.zzfw.authorize.service.AuthorizeService;
++import com.wisedu.zzfwclient.common.exception.ZzfwClientException;
++import com.wisedu.zzfwclient.common.exception.ZzfwSystemException;
++import com.wisedu.zzfwclient.common.interceptor.ZzfwClientInterceptor;
++/**
++ * 
++* @ClassName: I18nAuthInterceptor
++* @Description: 国际化 （语言变更授权拦截器）
++* @author  hyluan
++* @date 2017年12月6日 上午11:18:17
++* @Copyright: Copyright (c) 2017 wisedu
++ */
++@Component
++public class I18nAuthInterceptor  extends HandlerInterceptorAdapter {
++
++	private final Logger logger = LoggerFactory.getLogger(ZzfwClientInterceptor.class);
++
++	@Autowired
++	private AuthorizeService authorizeService;
++	
++	/**
++	 * 需要拦截的修改语言路径
++	 */
++	private String[] languageUrls;
++	
++	@Autowired
++	@Qualifier("commonConfig")
++	private Properties commonConfig;
++	
++	@PostConstruct
++	private void init(){
++		String urls = commonConfig.getProperty("languageUrls");
++		languageUrls = StringUtils.defaultIfEmpty(urls, "/*/changeLanguage").split(",");
++	}
++	
++	@Override
++	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
++			throws Exception {
++		String requestURI = request.getRequestURI();
++		if(handler instanceof HandlerMethod){
++			//配置拦截国际化部分
++			AntPathMatcher antPathMatcher = new AntPathMatcher();
++			for (int i = 0; i < languageUrls.length; i++) {
++				if(antPathMatcher.match(languageUrls[i], requestURI)){
++					String language = request.getParameter("language");
++					try{
++						authorizeService.validI18n(language);
++					}catch(Exception e){
++						throw new ZzfwClientException("国际化未授权",e);
++					}
++				}
++			}
++		}
++		return true;
++	}
++}
+Index: src/test/java/com/wisedu/zzfw/test/BaseJunit4Test.java
+===================================================================
+--- src/test/java/com/wisedu/zzfw/test/BaseJunit4Test.java	(revision 65101)
++++ src/test/java/com/wisedu/zzfw/test/BaseJunit4Test.java	(working copy)
+@@ -1,20 +1,32 @@
+ package com.wisedu.zzfw.test;
+ 
+ 
++import java.util.Locale;
+ import java.util.Map;
+ 
++import javax.servlet.http.HttpServletRequest;
++
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.context.annotation.Bean;
++import org.springframework.mock.web.MockHttpServletRequest;
+ import org.springframework.scheduling.config.Task;
+ import org.springframework.test.context.ContextConfiguration;
+ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+ 
++import com.wisedu.zzfw.common.constants.Consts;
+ import com.wisedu.zzfw.core.newterminal.serviceprogram.interfaces.busiregion.impl.DefaultBusiRegionNoticeOrderFinishJob;
++import com.wisedu.zzfw.security.cert.Cert;
++import com.wisedu.zzfw.security.cert.CertFactory;
++import com.wisedu.zzfw.security.cert.secret.AESSecret;
+ //import com.wisedu.zzfwclient.tkmbg.model.TestBean;
+ import com.wisedu.zzfw.template.common.util.SpringUtil;
++import com.wisedu.zzfw.template.sys.service.ZzfwXtcsService;
++
++import net.sf.json.JSONObject;
+ 
+ @RunWith(SpringJUnit4ClassRunner.class) 
+ @ContextConfiguration(locations = { "classpath*:spring-*.xml" })  
+@@ -32,5 +44,24 @@
+ 		System.out.println(testBean.toString());
+ 		job.execute();
+ 	}*/
++	@Bean
++	public HttpServletRequest httpServletRequest(){
++		return new MockHttpServletRequest();
++	}
+ 	
++	@Autowired
++	ZzfwXtcsService zzfwXtcsService;
++	
++	@Test
++	public void testI18nCert(){
++		Cert cert = CertFactory.getZzfwCertInstance(zzfwXtcsService.getXtcsz(Consts.ZZFW_FILE_ROOT_URL), "author", "i18n",new AESSecret());
++		JSONObject jo = new JSONObject();
++		jo.put("schoolId", "01001");
++		String[] lanAr = new String[]{ Locale.CHINA.getLanguage(), Locale.ENGLISH.getLanguage()};
++		jo.put("languages", lanAr);
++		jo.put("expireTime", "2057-10-10");
++		cert.genCert(jo.toString());
++		String decodeCert = cert.getDecodeCert();
++		System.out.println(decodeCert);
++	}
+ }
+Index: src/main/java/com/wisedu/zzfw/core/newterminal/serviceprogram/interfaces/busiregion/impl/TerminalFilterBusiRegionOrderHandler.java
+===================================================================
+--- src/main/java/com/wisedu/zzfw/core/newterminal/serviceprogram/interfaces/busiregion/impl/TerminalFilterBusiRegionOrderHandler.java	(revision 65101)
++++ src/main/java/com/wisedu/zzfw/core/newterminal/serviceprogram/interfaces/busiregion/impl/TerminalFilterBusiRegionOrderHandler.java	(working copy)
+@@ -28,7 +28,7 @@
+ @Component
+ public class TerminalFilterBusiRegionOrderHandler extends DefaultBusiRegionOrderHandler {
+ 	
+-	@Autowired
++	@Autowired(required=false)
+ 	private HttpServletRequest request;
+ 	
+ 	@Autowired
+Index: src/main/java/com/wisedu/zzfwclient/login/controller/HomeController.java
+===================================================================
+--- src/main/java/com/wisedu/zzfwclient/login/controller/HomeController.java	(revision 66089)
++++ src/main/java/com/wisedu/zzfwclient/login/controller/HomeController.java	(working copy)
+@@ -25,19 +25,20 @@
+ import org.springframework.web.bind.annotation.ResponseBody;
+ import org.springframework.web.servlet.i18n.SessionLocaleResolver;
+ 
+-import com.wisedu.zzfw.cache.util.CacheUtil3;
++import com.wisedu.zzfw.authorize.service.AuthorizeService;
++import com.wisedu.zzfw.common.constants.Consts;
+ import com.wisedu.zzfw.common.web.BaseController;
+ import com.wisedu.zzfw.template.common.util.SpringUtil;
+-import com.wisedu.zzfw.template.fwxm.service.ZzfwFwxmService;
+ import com.wisedu.zzfw.template.skin.model.ZzfwPfsz;
+ import com.wisedu.zzfw.template.skin.service.ZzfwPfszService;
+ import com.wisedu.zzfw.template.sys.service.ZzfwXtcsService;
+-import com.wisedu.zzfw.template.terminal.service.ZzfwFwzdZdxxService;
+ import com.wisedu.zzfwclient.common.exception.ZzfwClientException;
+ import com.wisedu.zzfwclient.common.exception.ZzfwSystemException;
+ import com.wisedu.zzfwclient.custom.interfaces.HomeInterface;
+ import com.wisedu.zzfwclient.login.service.HomeService;
+ 
++import net.sf.json.JSONObject;
++
+ @Controller
+ @RequestMapping(value = "/")
+ public class HomeController extends BaseController{
+@@ -54,16 +55,10 @@
+ 	private ZzfwXtcsService zzfwXtcsService;
+ 
+ 	@Autowired
+-	private CacheUtil3 cacheUtil;
+-	
+-	@Autowired
+-	private ZzfwFwzdZdxxService zzfwFwzdZdxxService;
+-	
+-	@Autowired
+ 	private ZzfwPfszService zzfwPfszService;
+ 	
+ 	@Autowired
+-	private ZzfwFwxmService fwxmListService;
++	private AuthorizeService authorizeService;
+ 	
+ 	
+ 	/**
+@@ -93,25 +88,6 @@
+ 		session.removeAttribute("logout.url");
+ 		session.removeAttribute("home.id");
+ 		session.removeAttribute("index.url");
+-		// 语言国际化
+-		Locale resolveLocale = resolver.resolveLocale(request);// 默认国际化配置
+-		if (StringUtils.isEmpty(language)) {
+-			language = resolveLocale.getLanguage().toLowerCase();
+-		} else {
+-			if (language.equals(Locale.CHINA.getLanguage())) {
+-				resolver.setLocale(request, response, Locale.CHINA);
+-			} else if (language.equals(Locale.ENGLISH.getLanguage())) {
+-				resolver.setLocale(request, response, Locale.ENGLISH);
+-			}
+-		}
+-		//从皮肤配置表中获取当前皮肤
+-		ZzfwPfsz currentSkin = zzfwPfszService.getCurrentSkin();
+-		String skinName = "default";
+-		if (currentSkin != null) {
+-			skinName = currentSkin.getPfbh();
+-		}
+-		request.getSession().setAttribute("skinName",
+-				skinName + "_" + language);
+ 		return "index";
+ 	}
+ 	
+@@ -151,6 +127,9 @@
+ 		}
+ 		request.getSession().setAttribute("skinName", skinName + "_" + language);
+ 		String header = request.getHeader("Referer");
++		if (StringUtils.isEmpty(header)) {
++			header= Consts.getAppServerUrl();
++		}
+ 		response.sendRedirect(header);
+ 	}
+ 	
+@@ -278,17 +257,23 @@
+ 	
+ 	/**
+ 	 * 
+-	* @Title: getFwxmCount
+-	* @Description: 获取服务项目数量
+-	* @return Map<String,Integer>    返回类型
+-	* @param request
++	* @Title: getI18n
++	* @Description: 获取18n授权信息
++	* @return JSONObject    返回类型
+ 	* @return
+ 	 */
+-	/*@RequestMapping(value="home/fwxmCount")
++	@RequestMapping(value="home/getI18n")
+ 	@ResponseBody
+-	public Map<String, Integer> getFwxmCount(HttpServletRequest request){
+-		String zdip = request.getRemoteAddr();
+-		Map<String, Integer> fwxmTypeByZdip = fwxmListService.getFwxmTypeByZdip(zdip);
+-		return fwxmTypeByZdip;
+-	}*/
++	public JSONObject getI18n(){
++		JSONObject i18n = new JSONObject();
++		try{
++			i18n = authorizeService.getI18n();
++			i18n.put("ret", 0);
++		}catch(Exception e){
++			i18n.put("ret", 1);
++			i18n.put("msg", e.getMessage());
++			log.info("获取18n授权信息失败",e);
++		}
++		return i18n;
++	}
+ }
+Index: src/main/resources/springmvc.xml
+===================================================================
+--- src/main/resources/springmvc.xml	(revision 65101)
++++ src/main/resources/springmvc.xml	(working copy)
+@@ -69,6 +69,11 @@
+ 			<bean
+ 				class="com.wisedu.zzfwclient.common.interceptor.ZzfwClientInterceptor" />
+ 		</mvc:interceptor>
++		<mvc:interceptor>
++			<mvc:mapping path="/**" />
++			<bean
++				class="com.wisedu.zzfwclient.i18n.interceptor.I18nAuthInterceptor" />
++		</mvc:interceptor>
+ 	</mvc:interceptors>
+ 
+ 	<aop:config proxy-target-class="true"></aop:config>

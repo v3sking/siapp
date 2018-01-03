@@ -1,0 +1,22 @@
+### Eclipse Workspace Patch 1.0
+#P zzfw-admin
+Index: src/main/webapp/resources/js/manage/multimedia/program.js
+===================================================================
+--- src/main/webapp/resources/js/manage/multimedia/program.js	(revision 65263)
++++ src/main/webapp/resources/js/manage/multimedia/program.js	(working copy)
+@@ -602,7 +602,6 @@
+         $(".player-menu").show();
+     //天气播放器
+     }else if (obj.BFQLX == 7){
+-    	debugger;
+         $(".player-weather").show();
+ 		$("#weatherTemplate").find("img:first").show();
+ 		$("#weatherTemplate").find("img:gt(0)").hide();
+@@ -614,6 +613,7 @@
+ 
+ programset.changeTempImg = function(tqmb){
+ 	programset.changeData();
++	programset.changeResource();
+ 	$("#weatherTemplate img").hide();
+ 	$('#weatherTemplateImg'+tqmb).show();
+ } 

@@ -1,0 +1,2574 @@
+16:12:54.479 [INFO ] [main] com.wisedu.zzfw.Application - Starting Application on USER-20170608CU with PID 4316 (E:\workspace\crudGenerator\target\classes started by Administrator in E:\workspace\crudGenerator)
+16:12:54.491 [INFO ] [main] com.wisedu.zzfw.Application - No active profile set, falling back to default profiles: default
+16:12:54.544 [INFO ] [main] o.s.c.a.AnnotationConfigApplicationContext - Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@35c5acda: startup date [Tue Jan 02 16:12:54 CST 2018]; root of context hierarchy
+16:12:56.191 [INFO ] [main] o.s.u.f.SpringTemplateLoader - SpringTemplateLoader for FreeMarker: using resource loader [org.springframework.context.annotation.AnnotationConfigApplicationContext@35c5acda: startup date [Tue Jan 02 16:12:54 CST 2018]; root of context hierarchy] and template loader path [classpath:/templates/]
+16:14:27.146 [INFO ] [main] com.wisedu.zzfw.Application - 开始生成
+16:14:27.237 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:package com.wisedu.zzfw.dictionary.web;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.wisedu.zzfw.template.dictionary.model.DmBj;
+import com.wisedu.zzfw.template.dictionary.model.DmBjParam;
+import com.wisedu.zzfw.template.dictionary.service.DmBjService;
+import com.wisedu.zzfw.template.common.model.ResponseList;
+import com.wisedu.zzfw.template.common.model.ResponseResult;
+import com.wisedu.zzfw.template.common.util.ResponseResultFactory;
+
+/**
+ * 
+* @ClassName: DmBjController
+* @Description: DmBj（班级）
+* @author  hyluan
+* @date 2017年9月29日 上午11:03:30
+* @Copyright: Copyright (c) 2017 wisedu
+ */
+@Controller
+@RequestMapping(value = "manage/dictionary/dmbj")
+public class DmBjController{
+
+	@Autowired
+	private DmBjService dmBjService;
+	
+	@Autowired
+	private ResponseResultFactory responseResultFactory;
+	
+	@RequestMapping(value = "view")
+	public String view(){
+		return "manage/dictionary/dmbj/dmbj";
+	}
+	
+	@InitBinder
+	protected void initBinder(WebDataBinder binder) {
+	    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+	    binder.registerCustomEditor(Date.class, new CustomDateEditor(dateFormat, true));
+	}
+	
+	@RequestMapping(value = "list",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseList<DmBj> list(DmBjParam dmBjParam) {
+		return dmBjService.selectPage(dmBjParam);
+	}
+
+	@RequestMapping(value = "add",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseResult<Object> add(DmBj dmBj){
+		return responseResultFactory.getSuccessObject(dmBjService.insertSelective(dmBj));
+	}
+
+	@RequestMapping(value = "get",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseResult<DmBj> get(@RequestParam(required=true) String id) {
+		return responseResultFactory.getSuccessObject(dmBjService.selectByPrimaryKey(id));
+	}
+
+	@RequestMapping(value = "delete",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseResult<Object> delete(@RequestParam(required=true) String id){
+		return responseResultFactory.getSuccessObject(dmBjService.deleteByPrimaryKey(id));
+	}
+	
+	@RequestMapping(value = "update",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseResult<Object> update(DmBj dmBj){
+		return responseResultFactory.getSuccessObject(dmBjService.updateByPrimaryKey(dmBj));
+	}
+	
+	@RequestMapping(value = "exist",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseResult<Object> exist(DmBj dmBj){
+		int count  = dmBjService.exist(dmBj);
+		if(count>0){
+			return responseResultFactory.getSuccessObject();
+		}else{
+			return responseResultFactory.getFailObject("该数据不存在");
+		}
+	}
+ 
+}
+
+16:14:27.238 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-base\zzfw-admin\src\main\java\com\wisedu\zzfw\dictionary\web\DmBjController.java
+16:14:27.248 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:/**
+ * 请求异常处理
+ */
+$(function(){
+	//初始化加载
+	dmbj.init();
+	
+	$.ajaxSetup({
+        complete : function(xhr,status){
+	    	console.log(status);
+        	if(status !="success"){
+        		var message = "<div class='message' >操作失败!</div>";
+    			cwxbox.box.show(message,2);
+        	}
+	    }
+	})
+});
+
+
+function formatOperation(val, row, index) {
+	return '<a href="#" onclick="dmbj.showEdit(true,'+index+')'
+			+ '">编辑</a>&nbsp&nbsp<a href="#" onclick="dmbj.del(true,'+index+')">删除</a>';
+}
+
+
+var dmbj ={
+		editFlag:false,
+		rowIndex:null,
+		init: function(){
+			dmbj.initTable();
+		},
+		initTable : function(){
+			var param = $("#searchForm").serializeJSON();
+		    Common.datagrid("table",{
+		        queryParams: param,
+		        url:rootUrl+'/manage/dictionary/dmbj/list.do',
+		        toolbar:"#toolbar",
+		        fitColumns:true,
+		        pagination:true,
+		        pageSize:20
+		    });
+		},
+		showEdit: function(editFlag,index){
+			//为空时新增
+			dmbj.editFlag = editFlag;
+			dmbj.rowIndex = index;
+			$("#editForm").form("clear");
+			if(!editFlag){
+				$("#edit-window").window("setTitle","新增");
+			}else{
+				$('#table').datagrid('selectRow', index);
+				var	row = $("#table").datagrid("getSelected");
+				if (row == null) {
+					Common.alertWarning("请选择行！");
+					return;
+				} 
+				$("#edit-window").window("setTitle","编辑");
+				$("#editForm").form("load",row);
+			}
+			$("#edit-window").window("open");
+		},
+		del: function(tipFlag,index){
+			$('#table').datagrid('selectRow', index);
+			var	row = $("#table").datagrid("getSelected");
+			if (row == null) {
+				Common.alertWarning("请选择行！");
+				return;
+			} 
+			if(tipFlag==undefined || tipFlag==true){
+				$.messager.confirm('提示','您确定要删除该记录吗?',function(r){
+			        if (r){
+			        	dmbj._del(tipFlag,row);
+			        }
+			    });
+			}else{
+				dmbj._del(tipFlag,row);
+			}
+		},
+		_del: function(tipFlag,row){
+			$.ajax({
+	            url:rootUrl+'/manage/dictionary/dmbj/delete.do',
+	            async:false,
+	            type:'post',
+                data:{"id":row.wid},
+                dataType:"json",
+                success:function(data){
+                	if (data.ret == 0){
+                		if(tipFlag==undefined || tipFlag == true){
+                			Common.alertSuccess("该记录删除成功!");
+                			dmbj.initTable();
+                		}
+		            }else{
+		            	if(tipFlag==undefined || tipFlag == true){
+		            		  Common.alertWarning("该记录删除失败!");
+                		}
+		              
+		            }
+               }
+            });
+		},
+		save : function(){
+			var data = $("#editForm").serializeJSON();
+			//校验必填
+			var flag = true;
+			for(var p in data){
+			  if(typeof(data[p]) != "function"){
+				 if("bjmc,bjdm".indexOf(p)<0){
+					 continue;
+				 }
+				 var input = $("#editForm #"+p);
+				 var fieldName = input.parent("td").prev("td").text();
+				 if(Common.isNull(fieldName)){
+					 continue;
+				 }
+				 if(fieldName.endWith(":")||fieldName.endWith("：")){
+					 fieldName = fieldName.substring(0,fieldName.length-1);
+				 }
+				 var font;
+				 var require = input.next();
+				 if(require.length == 0 || !require.is("font")){
+					 require = input.next().next();
+				 }
+				 if(require.length == 0 || !require.is("font")){
+					 continue;
+				 }else{
+					 if( Common.isNull(data[p])){
+						 Common.alertWarning("'"+fieldName+"'为空！");
+						 flag = false;
+						 break;
+					 }
+				 }
+			  }
+			}
+			if(!flag){
+				return;
+			}
+			//是否需要校验唯一性
+			var needCheckFlag = false;
+			//新增校验
+			if(Common.isNull(data.wid)){
+				needCheckFlag = true;
+				delete data.wid;
+			}else{
+				//修改了编号时也校验
+				var	row = $("#table").datagrid("getSelected");
+				if(!dmbj.editFlag){
+					needCheckFlag = true;
+				}else{
+					var checkColumns = "bjdm".split(",");
+					for(var i = 0; i<checkColumns.length; i++ ){
+						if(data[checkColumns[i]] != row[checkColumns[i]]){
+							needCheckFlag = true;
+							break;
+						}
+					}
+				}
+			}
+			//校验编号是否重复结果
+			var validRet = false;
+			if(needCheckFlag){
+				var validColumnStr = "bjdm";
+				var validParam = {};
+				var validColumns = validColumnStr.split(",");
+				for(var i = 0; i<validColumns.length; i++){
+					var col = validColumns[i];
+					validParam[col] = $("#editForm #"+col).val();
+				}
+				$.ajax({
+		            url:rootUrl+'/manage/dictionary/dmbj/exist.do',
+		            async:false,
+		            data:validParam,
+		            dataType:"json",
+		            success:function(obj){
+		            	if (obj.ret == 0){
+		            		//存在
+		            		validRet = true;
+			            }else{
+			            	validRet = false;
+			            } 
+		           }
+		        });
+			}
+			if(validRet){
+				Common.alertWarning("该数据已存在，请检查！");
+				return;
+			}
+			var action = "";
+			if(dmbj.editFlag){
+				// 因为自增长主键 编辑删掉再新增
+				dmbj.del(false,dmbj.rowIndex);
+			}
+			$.ajax({
+	            url:rootUrl+'/manage/dictionary/dmbj/add.do',
+	            async:false,
+	            type:"post",
+	            data:data,
+	            dataType:"json",
+	            success:function(obj){
+	            	if (obj.ret == 0){
+		            	Common.alertSuccess("保存成功!");
+		            	dmbj.initTable();
+		            	$("#edit-window").window("close");
+		            }else{
+		                Common.alertWarning("保存失败!");
+		            }
+	           }
+	        });
+		}
+};
+16:14:27.249 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-base\zzfw-admin\src\main\webapp\resources\js\manage\dictionary\dmbj\dmbj.js
+16:14:27.493 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:<%@page language="java" pageEncoding="UTF-8"%>
+
+<%@ include file="/views/common/taglibs.jsp"%>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>自助服务平台 - </title>
+<link rel="stylesheet" type="text/css"
+	href="${ctx}/resources/common/themes/default/easyui.css" />
+<link rel="stylesheet" type="text/css"
+	href="${ctx}/resources/common/themes/icon.css" />
+<link rel="stylesheet" type="text/css"
+	href="${ctx}/resources/css/showdialog.css" />
+<link rel="stylesheet" type="text/css"
+	href="${ctx}/resources/css/window-form-table.css" />
+<script type="text/javascript"
+	src="${ctx}/resources/js/common/jquery.easyui.min.js"></script>
+<script type="text/javascript"
+	src="${ctx}/resources/js/common/common.showdialog.js"></script>
+<script type="text/javascript"
+	src="${ctx}/resources/js/common/jquery.serializejson.js"></script>
+<script type="text/javascript"
+	src="${ctx}/resources/js/manage/common.js"></script>
+<script type="text/javascript"
+    src="${ctx}/resources/js/manage/dictionary/dmbj/dmbj.js"></script>
+<script type="text/javascript">
+    var rootUrl = "${ctx}";
+</script>
+</head>
+<body>
+	<div class="easyui-panel" title="">   
+        <table id="table" style="height: 600px;">
+			<thead>
+				<tr>
+							<th data-options="field:'wid',width:105,align:'center',hidden:true">主键id</th>
+							<th data-options="field:'bjdm',width:105,align:'center'">班级代码</th>
+							<th data-options="field:'bjjc',width:105,align:'center'">班级简称</th>
+							<th data-options="field:'bjmc',width:105,align:'center'">班级名称</th>
+							<th data-options="field:'bjywmc',width:105,align:'center'">班级英文名称</th>
+							<th data-options="field:'bz',width:105,align:'center'">备注</th>
+							<th data-options="field:'nj',width:105,align:'center'">年级</th>
+							<th data-options="field:'yxdm',width:105,align:'center'">院系代码</th>
+							<th data-options="field:'zydm',width:105,align:'center'">专业代码</th>
+					<th data-options="field:'operation',width:94,align:'center',formatter:formatOperation"></th>
+				</tr>
+			</thead>
+		</table>
+		<div id="toolbar" style="height:auto;padding:0">
+			<div style="padding:2px;">
+				<form id="searchForm">
+					<table style="width: 100%;height: auto;" border="0">
+						<tr>
+									<td align="right">班级代码：</td>
+									<td align="left" width="166">
+										<input id="bjdm" name="bjdm" style="height:18px;width: 148px;" class="easyui-validatebox textbox">
+									</td>
+									<td align="right">班级名称：</td>
+									<td align="left" width="166">
+										<input id="bjmc" name="bjmc" style="height:18px;width: 148px;" class="easyui-validatebox textbox">
+									</td>
+							<td align="right" colspan="2" style="padding-right: 51px;"><a href="javascript:void(0)"
+								class="easyui-linkbutton" icon="icon-search"
+								onclick="dmbj.initTable()" style="width: 60px;">查询</a></td>
+						</tr>
+					</table>
+				</form>
+			</div>
+			<div style="border-top:1px solid #dddddd;padding:2px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" 
+				data-options="iconCls:'icon-add',plain:true" onclick="dmbj.showEdit(false)">新增</a>
+			</div>
+		</div>
+		<div id="edit-window" title="详情" class="easyui-window"
+			data-options="modal:true,closed:true"
+			style="width:500px;height:530px;padding:5px">
+			<div class="easyui-layout" data-options="fit:true">
+				<div data-options="region:'center'" style="padding:0;border:0">
+					<form id="editForm" data-options="novalidate:true">
+						<input type="hidden" id='wid' name='wid'/>
+						<table class="window-form-table">
+									<tr>
+										<td>班级代码:</td>
+										<td><input id="bjdm" name="bjdm"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>班级简称:</td>
+										<td><input id="bjjc" name="bjjc"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>班级名称:</td>
+										<td><input id="bjmc" name="bjmc"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>班级英文名称:</td>
+										<td><input id="bjywmc" name="bjywmc"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>备注:</td>
+										<td><input id="bz" name="bz"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>年级:</td>
+										<td><input id="nj" name="nj"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>院系代码:</td>
+										<td><input id="yxdm" name="yxdm"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>专业代码:</td>
+										<td><input id="zydm" name="zydm"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+						</table>
+					</form>
+				</div>
+				<div data-options="region:'south',border:false"
+							style="text-align: center; padding: 5px;">
+					<a id="save" href="javascript:void(0)" onclick="dmbj.save()"
+						class="easyui-linkbutton" icon="icon-save">保存</a><a
+						href="javascript:void(0)"
+						onclick="$('#edit-window').window('close')"
+						class="easyui-linkbutton" icon="icon-cancel">关闭</a>
+				</div>
+			</div>
+		</div>
+	</div> 
+</body>
+</html>
+
+16:14:27.494 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-base\zzfw-admin\src\main\webapp\WEB-INF\views\manage\dictionary\dmbj\dmbj.jsp
+16:14:27.499 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:package com.wisedu.zzfw.template.dictionary.model;
+
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.Min;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+/**
+ * 
+* @ClassName: DmBjParam
+* @Description: DmBj（班级）
+* @author  hyluan
+* @date 2017年12月18日 下午5:08:53
+* @Copyright: Copyright (c) 2017 wisedu
+ */
+@ApiModel("DmBjParam （DmBj（班级））")
+public class DmBjParam extends DmBj {
+
+	private static final long serialVersionUID = 1L;
+
+	@ApiModelProperty(value = "每页长度", required = false)
+	@Min(1)
+	@Digits(integer = 100, fraction = 0)
+	private Integer rows;
+
+	@ApiModelProperty(value = "页码", required = false)
+	@Min(1)
+	@Digits(integer = 100, fraction = 0)
+	private Integer page;
+
+	public Integer getRows() {
+		return rows;
+	}
+
+	public void setRows(Integer rows) {
+		this.rows = rows;
+	}
+
+	public Integer getPage() {
+		return page;
+	}
+
+	public void setPage(Integer page) {
+		this.page = page;
+	}
+	
+}
+
+16:14:27.499 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-interface\zzfw-template\src\main\java\com\wisedu\zzfw\template\dictionary\model\DmBjParam.java
+16:14:27.505 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:package com.wisedu.zzfw.template.dictionary.service;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
+
+import com.wisedu.zzfw.template.dictionary.model.DmBj;
+import com.wisedu.zzfw.template.dictionary.model.DmBjParam;
+import com.wisedu.zzfw.template.common.model.ResponseList;
+import com.wisedu.zzfw.template.common.service.AbstractCommonService;
+import com.wisedu.zzfw.template.common.util.JacksonUtil;
+
+import tk.mybatis.mapper.common.Mapper;
+import tk.mybatis.mapper.entity.Example;
+import tk.mybatis.mapper.entity.Example.Criteria;
+
+/**
+ * 
+* @ClassName: DmBjService
+* @Description: DmBj（班级）
+* @author  hyluan
+* @date 2017年12月18日 下午5:08:53
+* @Copyright: Copyright (c) 2017 wisedu
+ */
+@Service
+public class DmBjService extends AbstractCommonService<DmBj>{
+
+	public DmBjService(@Qualifier("dmBjMapper") Mapper<DmBj> mapper) {
+		super(mapper);
+	}
+
+	public ResponseList<DmBj> selectPage(DmBjParam dmBjParam){
+		PageHelper.startPage(dmBjParam.getPage(), dmBjParam.getRows());
+		Example example = new Example(DmBj.class);
+		Criteria criteria = example.createCriteria();
+		  if(!StringUtils.isEmpty(dmBjParam.getWid())){
+			  criteria.andLike(DmBj.FieldEnum.WID.javaFieldName(),"%"+dmBjParam.getWid()+"%");
+		  }
+		  if(!StringUtils.isEmpty(dmBjParam.getBjdm())){
+			  criteria.andLike(DmBj.FieldEnum.BJDM.javaFieldName(),"%"+dmBjParam.getBjdm()+"%");
+		  }
+		  if(!StringUtils.isEmpty(dmBjParam.getBjjc())){
+			  criteria.andLike(DmBj.FieldEnum.BJJC.javaFieldName(),"%"+dmBjParam.getBjjc()+"%");
+		  }
+		  if(!StringUtils.isEmpty(dmBjParam.getBjmc())){
+			  criteria.andLike(DmBj.FieldEnum.BJMC.javaFieldName(),"%"+dmBjParam.getBjmc()+"%");
+		  }
+		  if(!StringUtils.isEmpty(dmBjParam.getBjywmc())){
+			  criteria.andLike(DmBj.FieldEnum.BJYWMC.javaFieldName(),"%"+dmBjParam.getBjywmc()+"%");
+		  }
+		  if(!StringUtils.isEmpty(dmBjParam.getBz())){
+			  criteria.andLike(DmBj.FieldEnum.BZ.javaFieldName(),"%"+dmBjParam.getBz()+"%");
+		  }
+		  if(!StringUtils.isEmpty(dmBjParam.getNj())){
+			  criteria.andLike(DmBj.FieldEnum.NJ.javaFieldName(),"%"+dmBjParam.getNj()+"%");
+		  }
+		  if(!StringUtils.isEmpty(dmBjParam.getYxdm())){
+			  criteria.andLike(DmBj.FieldEnum.YXDM.javaFieldName(),"%"+dmBjParam.getYxdm()+"%");
+		  }
+		  if(!StringUtils.isEmpty(dmBjParam.getZydm())){
+			  criteria.andLike(DmBj.FieldEnum.ZYDM.javaFieldName(),"%"+dmBjParam.getZydm()+"%");
+		  }
+		
+		example.setOrderByClause(" bjdm desc ");
+		Page<DmBj> data = (Page<DmBj>)super.getMapper().selectByExample(example);
+		return JacksonUtil.getTableJSON(data.getTotal(), data);
+	}
+	
+	public DmBj selectByPrimaryKey(String id) {
+		return super.selectByPrimaryKey(id);
+	}
+	
+	public int insertSelective(DmBj dmBj) {
+		return super.insertSelective( dmBj);
+	}
+	
+	public int deleteByPrimaryKey(String id) {
+		return super.deleteByPrimaryKey(id);
+	}
+	
+	public int updateByPrimaryKey(DmBj dmBj) {
+		return super.updateByPrimaryKey( dmBj);
+	}
+	
+	public int exist(DmBj dmBj){
+		return super.selectCount(dmBj);
+	}
+
+
+}
+
+16:14:27.506 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-interface\zzfw-template\src\main\java\com\wisedu\zzfw\template\dictionary\service\DmBjService.java
+16:14:27.527 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:--1、创建模块
+--创建第二级目录节点
+insert into ss_module (WID, NAME, MEMO, PARENT_WID, INDEXED, TYPE)
+values ('e203ca4f94484e92a4afdf59425c8de5', '班级管理', null,(select wid from ss_module p where p.name='字典表维护'),
+(select max(indexed)+1 from ss_module where parent_wid = (select wid from ss_module p where p.name='字典表维护')), '1');
+--二级目录添加URL
+delete from ss_modulepath where MODULE_WID = 'e203ca4f94484e92a4afdf59425c8de5';
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('0a4f2857e4764277afa3a852f59a1d06', 'e203ca4f94484e92a4afdf59425c8de5', '/manage/dictionary/dmbj/view.do', '', 0);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('0aa7f2b68ab743c091a4ab9246bd1b91', 'e203ca4f94484e92a4afdf59425c8de5', '/manage/dictionary/dmbj/get.do', '', 1);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('0f74bfea3c0e4332b7fcea21b170a595', 'e203ca4f94484e92a4afdf59425c8de5', '/manage/dictionary/dmbj/list.do', '', 1);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('8749761805cf453f80bc10cecfc2f92d', 'e203ca4f94484e92a4afdf59425c8de5', '/manage/dictionary/dmbj/add.do', '', 1);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('a77f7243aecb44fcb341fe4e4edc529d', 'e203ca4f94484e92a4afdf59425c8de5', '/manage/dictionary/dmbj/delete.do', '', 1);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('ad3841751779403c91d9fb8f98fde8bf', 'e203ca4f94484e92a4afdf59425c8de5', '/manage/dictionary/dmbj/update.do', '', 1);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('8754d5493e5e476d9be1088616365968', 'e203ca4f94484e92a4afdf59425c8de5', '/manage/dictionary/dmbj/exist.do', '', 1);
+--2、创建菜单，默认菜单创建在实施人员权限下
+insert into ss_menuitem (WID, NAME, ICON_PATH, PATH, MODULE_WID, MENU_WID, MEMO, PARENT_WID, INDEXED)
+values ('d9b8781d2747459aa6b4c304b3de5b48', '班级管理', null, null, 'e203ca4f94484e92a4afdf59425c8de5',
+	 (select wid from ss_menu where role='实施管理员'), null, (select wid from ss_menuitem where name='字典表维护'), 
+	 (select max(indexed)+1 from ss_menuitem where parent_wid = (select wid from ss_menuitem where name='字典表维护')));
+commit;
+
+16:14:27.527 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-interface\zzfw-template\src\main\resources\sql\dmbj.sql
+16:14:27.528 [INFO ] [main] com.wisedu.zzfw.Application - 生成结束
+16:30:31.513 [INFO ] [main] com.wisedu.zzfw.Application - Starting Application on USER-20170608CU with PID 8924 (E:\workspace\crudGenerator\target\classes started by Administrator in E:\workspace\crudGenerator)
+16:30:31.520 [INFO ] [main] com.wisedu.zzfw.Application - No active profile set, falling back to default profiles: default
+16:30:31.570 [INFO ] [main] o.s.c.a.AnnotationConfigApplicationContext - Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@770374bf: startup date [Tue Jan 02 16:30:31 CST 2018]; root of context hierarchy
+16:30:33.073 [INFO ] [main] o.s.u.f.SpringTemplateLoader - SpringTemplateLoader for FreeMarker: using resource loader [org.springframework.context.annotation.AnnotationConfigApplicationContext@770374bf: startup date [Tue Jan 02 16:30:31 CST 2018]; root of context hierarchy] and template loader path [classpath:/templates/]
+16:30:50.095 [INFO ] [main] com.wisedu.zzfw.Application - Starting Application on USER-20170608CU with PID 7560 (E:\workspace\crudGenerator\target\classes started by Administrator in E:\workspace\crudGenerator)
+16:30:50.102 [INFO ] [main] com.wisedu.zzfw.Application - No active profile set, falling back to default profiles: default
+16:30:50.152 [INFO ] [main] o.s.c.a.AnnotationConfigApplicationContext - Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@7e26f5a7: startup date [Tue Jan 02 16:30:50 CST 2018]; root of context hierarchy
+16:30:51.608 [INFO ] [main] o.s.u.f.SpringTemplateLoader - SpringTemplateLoader for FreeMarker: using resource loader [org.springframework.context.annotation.AnnotationConfigApplicationContext@7e26f5a7: startup date [Tue Jan 02 16:30:50 CST 2018]; root of context hierarchy] and template loader path [classpath:/templates/]
+16:30:55.087 [INFO ] [main] com.wisedu.zzfw.Application - 开始生成
+16:30:55.222 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:package com.wisedu.zzfw.campus.web;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.wisedu.zzfw.template.campus.model.ZzfwXq;
+import com.wisedu.zzfw.template.campus.model.ZzfwXqParam;
+import com.wisedu.zzfw.template.campus.service.ZzfwXqService;
+import com.wisedu.zzfw.template.common.model.ResponseList;
+import com.wisedu.zzfw.template.common.model.ResponseResult;
+import com.wisedu.zzfw.template.common.util.ResponseResultFactory;
+
+/**
+ * 
+* @ClassName: ZzfwXqController
+* @Description: ZzfwXq（校区对象）
+* @author  hyluan
+* @date 2017年9月29日 上午11:03:30
+* @Copyright: Copyright (c) 2017 wisedu
+ */
+@Controller
+@RequestMapping(value = "manage/campus/campus")
+public class ZzfwXqController{
+
+	@Autowired
+	private ZzfwXqService zzfwXqService;
+	
+	@Autowired
+	private ResponseResultFactory responseResultFactory;
+	
+	@RequestMapping(value = "view")
+	public String view(){
+		return "manage/campus/campus/zzfwxq";
+	}
+	
+	@InitBinder
+	protected void initBinder(WebDataBinder binder) {
+	    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+	    binder.registerCustomEditor(Date.class, new CustomDateEditor(dateFormat, true));
+	}
+	
+	@RequestMapping(value = "list",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseList<ZzfwXq> list(ZzfwXqParam zzfwXqParam) {
+		return zzfwXqService.selectPage(zzfwXqParam);
+	}
+
+	@RequestMapping(value = "add",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseResult<Object> add(ZzfwXq zzfwXq){
+		return responseResultFactory.getSuccessObject(zzfwXqService.insertSelective(zzfwXq));
+	}
+
+	@RequestMapping(value = "get",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseResult<ZzfwXq> get(@RequestParam(required=true) String id) {
+		return responseResultFactory.getSuccessObject(zzfwXqService.selectByPrimaryKey(id));
+	}
+
+	@RequestMapping(value = "delete",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseResult<Object> delete(@RequestParam(required=true) String id){
+		return responseResultFactory.getSuccessObject(zzfwXqService.deleteByPrimaryKey(id));
+	}
+	
+	@RequestMapping(value = "update",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseResult<Object> update(ZzfwXq zzfwXq){
+		return responseResultFactory.getSuccessObject(zzfwXqService.updateByPrimaryKey(zzfwXq));
+	}
+	
+	@RequestMapping(value = "exist",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseResult<Object> exist(ZzfwXq zzfwXq){
+		int count  = zzfwXqService.exist(zzfwXq);
+		if(count>0){
+			return responseResultFactory.getSuccessObject();
+		}else{
+			return responseResultFactory.getFailObject("该数据不存在");
+		}
+	}
+ 
+}
+
+16:30:55.224 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-base\zzfw-admin\src\main\java\com\wisedu\zzfw\campus\web\ZzfwXqController.java
+16:30:55.239 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:/**
+ * 请求异常处理
+ */
+$(function(){
+	//初始化加载
+	zzfwxq.init();
+	
+	$.ajaxSetup({
+        complete : function(xhr,status){
+	    	console.log(status);
+        	if(status !="success"){
+        		var message = "<div class='message' >操作失败!</div>";
+    			cwxbox.box.show(message,2);
+        	}
+	    }
+	})
+});
+
+
+function formatOperation(val, row, index) {
+	return '<a href="#" onclick="zzfwxq.showEdit(true,'+index+')'
+			+ '">编辑</a>&nbsp&nbsp<a href="#" onclick="zzfwxq.del(true,'+index+')">删除</a>';
+}
+
+
+var zzfwxq ={
+		editFlag:false,
+		rowIndex:null,
+		init: function(){
+			zzfwxq.initTable();
+		},
+		initTable : function(){
+			var param = $("#searchForm").serializeJSON();
+		    Common.datagrid("table",{
+		        queryParams: param,
+		        url:rootUrl+'/manage/campus/campus/list.do',
+		        toolbar:"#toolbar",
+		        fitColumns:true,
+		        pagination:true,
+		        pageSize:20
+		    });
+		},
+		showEdit: function(editFlag,index){
+			//为空时新增
+			zzfwxq.editFlag = editFlag;
+			zzfwxq.rowIndex = index;
+			$("#editForm").form("clear");
+			if(!editFlag){
+				$("#edit-window").window("setTitle","新增");
+			}else{
+				$('#table').datagrid('selectRow', index);
+				var	row = $("#table").datagrid("getSelected");
+				if (row == null) {
+					Common.alertWarning("请选择行！");
+					return;
+				} 
+				$("#edit-window").window("setTitle","编辑");
+				$("#editForm").form("load",row);
+			}
+			$("#edit-window").window("open");
+		},
+		del: function(tipFlag,index){
+			$('#table').datagrid('selectRow', index);
+			var	row = $("#table").datagrid("getSelected");
+			if (row == null) {
+				Common.alertWarning("请选择行！");
+				return;
+			} 
+			if(tipFlag==undefined || tipFlag==true){
+				$.messager.confirm('提示','您确定要删除该记录吗?',function(r){
+			        if (r){
+			        	zzfwxq._del(tipFlag,row);
+			        }
+			    });
+			}else{
+				zzfwxq._del(tipFlag,row);
+			}
+		},
+		_del: function(tipFlag,row){
+			$.ajax({
+	            url:rootUrl+'/manage/campus/campus/delete.do',
+	            async:false,
+	            type:'post',
+                data:{"id":row.wid},
+                dataType:"json",
+                success:function(data){
+                	if (data.ret == 0){
+                		if(tipFlag==undefined || tipFlag == true){
+                			Common.alertSuccess("该记录删除成功!");
+                			zzfwxq.initTable();
+                		}
+		            }else{
+		            	if(tipFlag==undefined || tipFlag == true){
+		            		  Common.alertWarning("该记录删除失败!");
+                		}
+		              
+		            }
+               }
+            });
+		},
+		save : function(){
+			var data = $("#editForm").serializeJSON();
+			//校验必填
+			var flag = true;
+			for(var p in data){
+			  if(typeof(data[p]) != "function"){
+				 if("xqdm,xqmc,csmc,xqdz,lxdh,sfsy,lng,lat".indexOf(p)<0){
+					 continue;
+				 }
+				 var input = $("#editForm #"+p);
+				 var fieldName = input.parent("td").prev("td").text();
+				 if(Common.isNull(fieldName)){
+					 continue;
+				 }
+				 if(fieldName.endWith(":")||fieldName.endWith("：")){
+					 fieldName = fieldName.substring(0,fieldName.length-1);
+				 }
+				 var font;
+				 var require = input.next();
+				 if(require.length == 0 || !require.is("font")){
+					 require = input.next().next();
+				 }
+				 if(require.length == 0 || !require.is("font")){
+					 continue;
+				 }else{
+					 if( Common.isNull(data[p])){
+						 Common.alertWarning("'"+fieldName+"'为空！");
+						 flag = false;
+						 break;
+					 }
+				 }
+			  }
+			}
+			if(!flag){
+				return;
+			}
+			//是否需要校验唯一性
+			var needCheckFlag = false;
+			//新增校验
+			if(Common.isNull(data.wid)){
+				needCheckFlag = true;
+				delete data.wid;
+			}else{
+				//修改了编号时也校验
+				var	row = $("#table").datagrid("getSelected");
+				if(!zzfwxq.editFlag){
+					needCheckFlag = true;
+				}else{
+					var checkColumns = "xqdm".split(",");
+					for(var i = 0; i<checkColumns.length; i++ ){
+						if(data[checkColumns[i]] != row[checkColumns[i]]){
+							needCheckFlag = true;
+							break;
+						}
+					}
+				}
+			}
+			//校验编号是否重复结果
+			var validRet = false;
+			if(needCheckFlag){
+				var validColumnStr = "xqdm";
+				var validParam = {};
+				var validColumns = validColumnStr.split(",");
+				for(var i = 0; i<validColumns.length; i++){
+					var col = validColumns[i];
+					validParam[col] = $("#editForm #"+col).val();
+				}
+				$.ajax({
+		            url:rootUrl+'/manage/campus/campus/exist.do',
+		            async:false,
+		            data:validParam,
+		            dataType:"json",
+		            success:function(obj){
+		            	if (obj.ret == 0){
+		            		//存在
+		            		validRet = true;
+			            }else{
+			            	validRet = false;
+			            } 
+		           }
+		        });
+			}
+			if(validRet){
+				Common.alertWarning("该数据已存在，请检查！");
+				return;
+			}
+			var action = "";
+			if(zzfwxq.editFlag){
+				// 因为自增长主键 编辑删掉再新增
+				zzfwxq.del(false,zzfwxq.rowIndex);
+			}
+			$.ajax({
+	            url:rootUrl+'/manage/campus/campus/add.do',
+	            async:false,
+	            type:"post",
+	            data:data,
+	            dataType:"json",
+	            success:function(obj){
+	            	if (obj.ret == 0){
+		            	Common.alertSuccess("保存成功!");
+		            	zzfwxq.initTable();
+		            	$("#edit-window").window("close");
+		            }else{
+		                Common.alertWarning("保存失败!");
+		            }
+	           }
+	        });
+		}
+};
+16:30:55.239 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-base\zzfw-admin\src\main\webapp\resources\js\manage\campus\campus\zzfwxq.js
+16:30:55.390 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:<%@page language="java" pageEncoding="UTF-8"%>
+
+<%@ include file="/views/common/taglibs.jsp"%>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>自助服务平台 - </title>
+<link rel="stylesheet" type="text/css"
+	href="${ctx}/resources/common/themes/default/easyui.css" />
+<link rel="stylesheet" type="text/css"
+	href="${ctx}/resources/common/themes/icon.css" />
+<link rel="stylesheet" type="text/css"
+	href="${ctx}/resources/css/showdialog.css" />
+<link rel="stylesheet" type="text/css"
+	href="${ctx}/resources/css/window-form-table.css" />
+<script type="text/javascript"
+	src="${ctx}/resources/js/common/jquery.easyui.min.js"></script>
+<script type="text/javascript"
+	src="${ctx}/resources/js/common/common.showdialog.js"></script>
+<script type="text/javascript"
+	src="${ctx}/resources/js/common/jquery.serializejson.js"></script>
+<script type="text/javascript"
+	src="${ctx}/resources/js/manage/common.js"></script>
+<script type="text/javascript"
+    src="${ctx}/resources/js/manage/campus/campus/zzfwxq.js"></script>
+<script type="text/javascript">
+    var rootUrl = "${ctx}";
+</script>
+</head>
+<body>
+	<div class="easyui-panel" title="">   
+        <table id="table" style="height: 600px;">
+			<thead>
+				<tr>
+							<th data-options="field:'xqdm',width:105,align:'center'">校区代码</th>
+							<th data-options="field:'bz',width:105,align:'center'">备注</th>
+							<th data-options="field:'lxdh',width:105,align:'center'">联系电话</th>
+							<th data-options="field:'px',width:105,align:'center'">排序</th>
+							<th data-options="field:'sfsy',width:105,align:'center'">是否使用 1是 0 否</th>
+							<th data-options="field:'xqdz',width:105,align:'center'">校区地址</th>
+							<th data-options="field:'xqgdzczz',width:105,align:'center'">校区固定资产总值</th>
+							<th data-options="field:'xqjxkysbzz',width:105,align:'center'">校区教学科研设备总值</th>
+							<th data-options="field:'xqjzmj',width:105,align:'center'">校区建筑面积</th>
+							<th data-options="field:'xqmc',width:105,align:'center'">校区名称</th>
+							<th data-options="field:'xqyb',width:105,align:'center'">校区邮编</th>
+							<th data-options="field:'xxmj',width:105,align:'center'">校区面积</th>
+							<th data-options="field:'xqfzr',width:105,align:'center'">校区负责人</th>
+							<th data-options="field:'xxxzqhdm',width:105,align:'center'">学校行政区划代码</th>
+							<th data-options="field:'csmc',width:105,align:'center'">当前校区所在城市名如：南京、北京</th>
+							<th data-options="field:'lng',width:105,align:'center'">经度</th>
+							<th data-options="field:'lat',width:105,align:'center'">纬度</th>
+					<th data-options="field:'operation',width:94,align:'center',formatter:formatOperation"></th>
+				</tr>
+			</thead>
+		</table>
+		<div id="toolbar" style="height:auto;padding:0">
+			<div style="padding:2px;">
+				<form id="searchForm">
+					<table style="width: 100%;height: auto;" border="0">
+						<tr>
+									<td align="right">校区代码：</td>
+									<td align="left" width="166">
+										<input id="xqdm" name="xqdm" style="height:18px;width: 148px;" class="easyui-validatebox textbox">
+									</td>
+									<td align="right">校区名称：</td>
+									<td align="left" width="166">
+										<input id="xqmc" name="xqmc" style="height:18px;width: 148px;" class="easyui-validatebox textbox">
+									</td>
+									<td align="right">当前校区所在城市名如：南京、北京：</td>
+									<td align="left" width="166">
+										<input id="csmc" name="csmc" style="height:18px;width: 148px;" class="easyui-validatebox textbox">
+									</td>
+							<td align="right" colspan="2" style="padding-right: 51px;"><a href="javascript:void(0)"
+								class="easyui-linkbutton" icon="icon-search"
+								onclick="zzfwxq.initTable()" style="width: 60px;">查询</a></td>
+						</tr>
+					</table>
+				</form>
+			</div>
+			<div style="border-top:1px solid #dddddd;padding:2px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" 
+				data-options="iconCls:'icon-add',plain:true" onclick="zzfwxq.showEdit(false)">新增</a>
+			</div>
+		</div>
+		<div id="edit-window" title="详情" class="easyui-window"
+			data-options="modal:true,closed:true"
+			style="width:500px;height:530px;padding:5px">
+			<div class="easyui-layout" data-options="fit:true">
+				<div data-options="region:'center'" style="padding:0;border:0">
+					<form id="editForm" data-options="novalidate:true">
+						<input type="hidden" id='wid' name='wid'/>
+						<table class="window-form-table">
+									<tr>
+										<td>校区代码:</td>
+										<td><input id="xqdm" name="xqdm"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>备注:</td>
+										<td><input id="bz" name="bz"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>联系电话:</td>
+										<td><input id="lxdh" name="lxdh"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>排序:</td>
+										<td><input id="px" name="px"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>是否使用 1是 0 否:</td>
+										<td><input id="sfsy" name="sfsy"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>校区地址:</td>
+										<td><input id="xqdz" name="xqdz"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>校区固定资产总值:</td>
+										<td><input id="xqgdzczz" name="xqgdzczz"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>校区教学科研设备总值:</td>
+										<td><input id="xqjxkysbzz" name="xqjxkysbzz"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>校区建筑面积:</td>
+										<td><input id="xqjzmj" name="xqjzmj"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>校区名称:</td>
+										<td><input id="xqmc" name="xqmc"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>校区邮编:</td>
+										<td><input id="xqyb" name="xqyb"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>校区面积:</td>
+										<td><input id="xxmj" name="xxmj"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>校区负责人:</td>
+										<td><input id="xqfzr" name="xqfzr"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>学校行政区划代码:</td>
+										<td><input id="xxxzqhdm" name="xxxzqhdm"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>当前校区所在城市名如：南京、北京:</td>
+										<td><input id="csmc" name="csmc"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>经度:</td>
+										<td><input id="lng" name="lng"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>纬度:</td>
+										<td><input id="lat" name="lat"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+						</table>
+					</form>
+				</div>
+				<div data-options="region:'south',border:false"
+							style="text-align: center; padding: 5px;">
+					<a id="save" href="javascript:void(0)" onclick="zzfwxq.save()"
+						class="easyui-linkbutton" icon="icon-save">保存</a><a
+						href="javascript:void(0)"
+						onclick="$('#edit-window').window('close')"
+						class="easyui-linkbutton" icon="icon-cancel">关闭</a>
+				</div>
+			</div>
+		</div>
+	</div> 
+</body>
+</html>
+
+16:30:55.391 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-base\zzfw-admin\src\main\webapp\WEB-INF\views\manage\campus\campus\zzfwxq.jsp
+16:30:55.395 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:package com.wisedu.zzfw.template.campus.model;
+
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.Min;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+/**
+ * 
+* @ClassName: ZzfwXqParam
+* @Description: ZzfwXq（校区对象）
+* @author  hyluan
+* @date 2017年12月18日 下午5:08:53
+* @Copyright: Copyright (c) 2017 wisedu
+ */
+@ApiModel("ZzfwXqParam （ZzfwXq（校区对象））")
+public class ZzfwXqParam extends ZzfwXq {
+
+	private static final long serialVersionUID = 1L;
+
+	@ApiModelProperty(value = "每页长度", required = false)
+	@Min(1)
+	@Digits(integer = 100, fraction = 0)
+	private Integer rows;
+
+	@ApiModelProperty(value = "页码", required = false)
+	@Min(1)
+	@Digits(integer = 100, fraction = 0)
+	private Integer page;
+
+	public Integer getRows() {
+		return rows;
+	}
+
+	public void setRows(Integer rows) {
+		this.rows = rows;
+	}
+
+	public Integer getPage() {
+		return page;
+	}
+
+	public void setPage(Integer page) {
+		this.page = page;
+	}
+	
+}
+
+16:30:55.395 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-interface\zzfw-template\src\main\java\com\wisedu\zzfw\template\campus\model\ZzfwXqParam.java
+16:30:55.403 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:package com.wisedu.zzfw.template.campus.service;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
+
+import com.wisedu.zzfw.template.campus.model.ZzfwXq;
+import com.wisedu.zzfw.template.campus.model.ZzfwXqParam;
+import com.wisedu.zzfw.template.common.model.ResponseList;
+import com.wisedu.zzfw.template.common.service.AbstractCommonService;
+import com.wisedu.zzfw.template.common.util.JacksonUtil;
+
+import tk.mybatis.mapper.common.Mapper;
+import tk.mybatis.mapper.entity.Example;
+import tk.mybatis.mapper.entity.Example.Criteria;
+
+/**
+ * 
+* @ClassName: ZzfwXqService
+* @Description: ZzfwXq（校区对象）
+* @author  hyluan
+* @date 2017年12月18日 下午5:08:53
+* @Copyright: Copyright (c) 2017 wisedu
+ */
+@Service
+public class ZzfwXqService extends AbstractCommonService<ZzfwXq>{
+
+	public ZzfwXqService(@Qualifier("zzfwXqMapper") Mapper<ZzfwXq> mapper) {
+		super(mapper);
+	}
+
+	public ResponseList<ZzfwXq> selectPage(ZzfwXqParam zzfwXqParam){
+		PageHelper.startPage(zzfwXqParam.getPage(), zzfwXqParam.getRows());
+		Example example = new Example(ZzfwXq.class);
+		Criteria criteria = example.createCriteria();
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqdm())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQDM.javaFieldName(),"%"+zzfwXqParam.getXqdm()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getBz())){
+			  criteria.andLike(ZzfwXq.FieldEnum.BZ.javaFieldName(),"%"+zzfwXqParam.getBz()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getLxdh())){
+			  criteria.andLike(ZzfwXq.FieldEnum.LXDH.javaFieldName(),"%"+zzfwXqParam.getLxdh()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getPx())){
+			  criteria.andLike(ZzfwXq.FieldEnum.PX.javaFieldName(),"%"+zzfwXqParam.getPx()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getSfsy())){
+			  criteria.andLike(ZzfwXq.FieldEnum.SFSY.javaFieldName(),"%"+zzfwXqParam.getSfsy()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqdz())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQDZ.javaFieldName(),"%"+zzfwXqParam.getXqdz()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqgdzczz())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQGDZCZZ.javaFieldName(),"%"+zzfwXqParam.getXqgdzczz()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqjxkysbzz())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQJXKYSBZZ.javaFieldName(),"%"+zzfwXqParam.getXqjxkysbzz()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqjzmj())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQJZMJ.javaFieldName(),"%"+zzfwXqParam.getXqjzmj()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqmc())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQMC.javaFieldName(),"%"+zzfwXqParam.getXqmc()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqyb())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQYB.javaFieldName(),"%"+zzfwXqParam.getXqyb()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXxmj())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XXMJ.javaFieldName(),"%"+zzfwXqParam.getXxmj()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqfzr())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQFZR.javaFieldName(),"%"+zzfwXqParam.getXqfzr()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXxxzqhdm())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XXXZQHDM.javaFieldName(),"%"+zzfwXqParam.getXxxzqhdm()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getCsmc())){
+			  criteria.andLike(ZzfwXq.FieldEnum.CSMC.javaFieldName(),"%"+zzfwXqParam.getCsmc()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getLng())){
+			  criteria.andLike(ZzfwXq.FieldEnum.LNG.javaFieldName(),"%"+zzfwXqParam.getLng()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getLat())){
+			  criteria.andLike(ZzfwXq.FieldEnum.LAT.javaFieldName(),"%"+zzfwXqParam.getLat()+"%");
+		  }
+		
+		example.setOrderByClause(" px asc,csmc desc,xqmc desc ");
+		Page<ZzfwXq> data = (Page<ZzfwXq>)super.getMapper().selectByExample(example);
+		return JacksonUtil.getTableJSON(data.getTotal(), data);
+	}
+	
+	public ZzfwXq selectByPrimaryKey(String id) {
+		return super.selectByPrimaryKey(id);
+	}
+	
+	public int insertSelective(ZzfwXq zzfwXq) {
+		return super.insertSelective( zzfwXq);
+	}
+	
+	public int deleteByPrimaryKey(String id) {
+		return super.deleteByPrimaryKey(id);
+	}
+	
+	public int updateByPrimaryKey(ZzfwXq zzfwXq) {
+		return super.updateByPrimaryKey( zzfwXq);
+	}
+	
+	public int exist(ZzfwXq zzfwXq){
+		return super.selectCount(zzfwXq);
+	}
+
+
+}
+
+16:30:55.403 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-interface\zzfw-template\src\main\java\com\wisedu\zzfw\template\campus\service\ZzfwXqService.java
+16:30:55.408 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:--1、创建模块
+--创建第二级目录节点
+insert into ss_module (WID, NAME, MEMO, PARENT_WID, INDEXED, TYPE)
+values ('410a81ae104b458b8fe329442a97fb2e', '校区管理', null,(select wid from ss_module p where p.name='字典表维护'),
+(select max(indexed)+1 from ss_module where parent_wid = (select wid from ss_module p where p.name='字典表维护')), '1');
+--二级目录添加URL
+delete from ss_modulepath where MODULE_WID = '410a81ae104b458b8fe329442a97fb2e';
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('4d5ec1c825e342478d438bb9c3fb9605', '410a81ae104b458b8fe329442a97fb2e', '/manage/campus/campus/view.do', '', 0);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('dcdccd85ffa24bbc8628e701933c93f3', '410a81ae104b458b8fe329442a97fb2e', '/manage/campus/campus/get.do', '', 1);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('dfc287a0f81f46e5b2f254a89d49687b', '410a81ae104b458b8fe329442a97fb2e', '/manage/campus/campus/list.do', '', 1);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('3d126d4446dc4fe293a63be85fc80f05', '410a81ae104b458b8fe329442a97fb2e', '/manage/campus/campus/add.do', '', 1);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('0fff917084da43ee98ee665ba6b62ee6', '410a81ae104b458b8fe329442a97fb2e', '/manage/campus/campus/delete.do', '', 1);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('475713d90f3f4fe1a4bca1ae50cc13af', '410a81ae104b458b8fe329442a97fb2e', '/manage/campus/campus/update.do', '', 1);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('c2059f46a43f424ca9020117a38947bd', '410a81ae104b458b8fe329442a97fb2e', '/manage/campus/campus/exist.do', '', 1);
+--2、创建菜单，默认菜单创建在实施人员权限下
+insert into ss_menuitem (WID, NAME, ICON_PATH, PATH, MODULE_WID, MENU_WID, MEMO, PARENT_WID, INDEXED)
+values ('c27d9483bf8e418dba536b72a1416e6c', '校区管理', null, null, '410a81ae104b458b8fe329442a97fb2e',
+	 (select wid from ss_menu where role='实施管理员'), null, (select wid from ss_menuitem where name='字典表维护'), 
+	 (select max(indexed)+1 from ss_menuitem where parent_wid = (select wid from ss_menuitem where name='字典表维护')));
+commit;
+
+16:30:55.408 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-interface\zzfw-template\src\main\resources\sql\zzfwxq.sql
+16:30:55.409 [INFO ] [main] com.wisedu.zzfw.Application - 生成结束
+16:33:03.050 [INFO ] [main] com.wisedu.zzfw.Application - Starting Application on USER-20170608CU with PID 7492 (E:\workspace\crudGenerator\target\classes started by Administrator in E:\workspace\crudGenerator)
+16:33:03.057 [INFO ] [main] com.wisedu.zzfw.Application - No active profile set, falling back to default profiles: default
+16:33:03.109 [INFO ] [main] o.s.c.a.AnnotationConfigApplicationContext - Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@6f8495: startup date [Tue Jan 02 16:33:03 CST 2018]; root of context hierarchy
+16:33:04.567 [INFO ] [main] o.s.u.f.SpringTemplateLoader - SpringTemplateLoader for FreeMarker: using resource loader [org.springframework.context.annotation.AnnotationConfigApplicationContext@6f8495: startup date [Tue Jan 02 16:33:03 CST 2018]; root of context hierarchy] and template loader path [classpath:/templates/]
+16:33:04.741 [INFO ] [main] com.wisedu.zzfw.Application - 开始生成
+16:33:04.837 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:package com.wisedu.zzfw.campus.web;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.wisedu.zzfw.template.campus.model.ZzfwXq;
+import com.wisedu.zzfw.template.campus.model.ZzfwXqParam;
+import com.wisedu.zzfw.template.campus.service.ZzfwXqService;
+import com.wisedu.zzfw.template.common.model.ResponseList;
+import com.wisedu.zzfw.template.common.model.ResponseResult;
+import com.wisedu.zzfw.template.common.util.ResponseResultFactory;
+
+/**
+ * 
+* @ClassName: ZzfwXqController
+* @Description: ZzfwXq（校区对象）
+* @author  hyluan
+* @date 2017年9月29日 上午11:03:30
+* @Copyright: Copyright (c) 2017 wisedu
+ */
+@Controller
+@RequestMapping(value = "manage/campus")
+public class ZzfwXqController{
+
+	@Autowired
+	private ZzfwXqService zzfwXqService;
+	
+	@Autowired
+	private ResponseResultFactory responseResultFactory;
+	
+	@RequestMapping(value = "view")
+	public String view(){
+		return "manage/campus/zzfwxq";
+	}
+	
+	@InitBinder
+	protected void initBinder(WebDataBinder binder) {
+	    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+	    binder.registerCustomEditor(Date.class, new CustomDateEditor(dateFormat, true));
+	}
+	
+	@RequestMapping(value = "list",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseList<ZzfwXq> list(ZzfwXqParam zzfwXqParam) {
+		return zzfwXqService.selectPage(zzfwXqParam);
+	}
+
+	@RequestMapping(value = "add",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseResult<Object> add(ZzfwXq zzfwXq){
+		return responseResultFactory.getSuccessObject(zzfwXqService.insertSelective(zzfwXq));
+	}
+
+	@RequestMapping(value = "get",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseResult<ZzfwXq> get(@RequestParam(required=true) String id) {
+		return responseResultFactory.getSuccessObject(zzfwXqService.selectByPrimaryKey(id));
+	}
+
+	@RequestMapping(value = "delete",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseResult<Object> delete(@RequestParam(required=true) String id){
+		return responseResultFactory.getSuccessObject(zzfwXqService.deleteByPrimaryKey(id));
+	}
+	
+	@RequestMapping(value = "update",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseResult<Object> update(ZzfwXq zzfwXq){
+		return responseResultFactory.getSuccessObject(zzfwXqService.updateByPrimaryKey(zzfwXq));
+	}
+	
+	@RequestMapping(value = "exist",method={RequestMethod.GET,RequestMethod.POST})
+	@ResponseBody
+	public ResponseResult<Object> exist(ZzfwXq zzfwXq){
+		int count  = zzfwXqService.exist(zzfwXq);
+		if(count>0){
+			return responseResultFactory.getSuccessObject();
+		}else{
+			return responseResultFactory.getFailObject("该数据不存在");
+		}
+	}
+ 
+}
+
+16:33:04.838 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-base\zzfw-admin\src\main\java\com\wisedu\zzfw\campus\web\ZzfwXqController.java
+16:33:04.851 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:/**
+ * 请求异常处理
+ */
+$(function(){
+	//初始化加载
+	zzfwxq.init();
+	
+	$.ajaxSetup({
+        complete : function(xhr,status){
+	    	console.log(status);
+        	if(status !="success"){
+        		var message = "<div class='message' >操作失败!</div>";
+    			cwxbox.box.show(message,2);
+        	}
+	    }
+	})
+});
+
+
+function formatOperation(val, row, index) {
+	return '<a href="#" onclick="zzfwxq.showEdit(true,'+index+')'
+			+ '">编辑</a>&nbsp&nbsp<a href="#" onclick="zzfwxq.del(true,'+index+')">删除</a>';
+}
+
+
+var zzfwxq ={
+		editFlag:false,
+		rowIndex:null,
+		init: function(){
+			zzfwxq.initTable();
+		},
+		initTable : function(){
+			var param = $("#searchForm").serializeJSON();
+		    Common.datagrid("table",{
+		        queryParams: param,
+		        url:rootUrl+'/manage/campus/list.do',
+		        toolbar:"#toolbar",
+		        fitColumns:true,
+		        pagination:true,
+		        pageSize:20
+		    });
+		},
+		showEdit: function(editFlag,index){
+			//为空时新增
+			zzfwxq.editFlag = editFlag;
+			zzfwxq.rowIndex = index;
+			$("#editForm").form("clear");
+			if(!editFlag){
+				$("#edit-window").window("setTitle","新增");
+			}else{
+				$('#table').datagrid('selectRow', index);
+				var	row = $("#table").datagrid("getSelected");
+				if (row == null) {
+					Common.alertWarning("请选择行！");
+					return;
+				} 
+				$("#edit-window").window("setTitle","编辑");
+				$("#editForm").form("load",row);
+			}
+			$("#edit-window").window("open");
+		},
+		del: function(tipFlag,index){
+			$('#table').datagrid('selectRow', index);
+			var	row = $("#table").datagrid("getSelected");
+			if (row == null) {
+				Common.alertWarning("请选择行！");
+				return;
+			} 
+			if(tipFlag==undefined || tipFlag==true){
+				$.messager.confirm('提示','您确定要删除该记录吗?',function(r){
+			        if (r){
+			        	zzfwxq._del(tipFlag,row);
+			        }
+			    });
+			}else{
+				zzfwxq._del(tipFlag,row);
+			}
+		},
+		_del: function(tipFlag,row){
+			$.ajax({
+	            url:rootUrl+'/manage/campus/delete.do',
+	            async:false,
+	            type:'post',
+                data:{"id":row.wid},
+                dataType:"json",
+                success:function(data){
+                	if (data.ret == 0){
+                		if(tipFlag==undefined || tipFlag == true){
+                			Common.alertSuccess("该记录删除成功!");
+                			zzfwxq.initTable();
+                		}
+		            }else{
+		            	if(tipFlag==undefined || tipFlag == true){
+		            		  Common.alertWarning("该记录删除失败!");
+                		}
+		              
+		            }
+               }
+            });
+		},
+		save : function(){
+			var data = $("#editForm").serializeJSON();
+			//校验必填
+			var flag = true;
+			for(var p in data){
+			  if(typeof(data[p]) != "function"){
+				 if("xqdm,xqmc,csmc,xqdz,lxdh,sfsy,lng,lat".indexOf(p)<0){
+					 continue;
+				 }
+				 var input = $("#editForm #"+p);
+				 var fieldName = input.parent("td").prev("td").text();
+				 if(Common.isNull(fieldName)){
+					 continue;
+				 }
+				 if(fieldName.endWith(":")||fieldName.endWith("：")){
+					 fieldName = fieldName.substring(0,fieldName.length-1);
+				 }
+				 var font;
+				 var require = input.next();
+				 if(require.length == 0 || !require.is("font")){
+					 require = input.next().next();
+				 }
+				 if(require.length == 0 || !require.is("font")){
+					 continue;
+				 }else{
+					 if( Common.isNull(data[p])){
+						 Common.alertWarning("'"+fieldName+"'为空！");
+						 flag = false;
+						 break;
+					 }
+				 }
+			  }
+			}
+			if(!flag){
+				return;
+			}
+			//是否需要校验唯一性
+			var needCheckFlag = false;
+			//新增校验
+			if(Common.isNull(data.wid)){
+				needCheckFlag = true;
+				delete data.wid;
+			}else{
+				//修改了编号时也校验
+				var	row = $("#table").datagrid("getSelected");
+				if(!zzfwxq.editFlag){
+					needCheckFlag = true;
+				}else{
+					var checkColumns = "xqdm".split(",");
+					for(var i = 0; i<checkColumns.length; i++ ){
+						if(data[checkColumns[i]] != row[checkColumns[i]]){
+							needCheckFlag = true;
+							break;
+						}
+					}
+				}
+			}
+			//校验编号是否重复结果
+			var validRet = false;
+			if(needCheckFlag){
+				var validColumnStr = "xqdm";
+				var validParam = {};
+				var validColumns = validColumnStr.split(",");
+				for(var i = 0; i<validColumns.length; i++){
+					var col = validColumns[i];
+					validParam[col] = $("#editForm #"+col).val();
+				}
+				$.ajax({
+		            url:rootUrl+'/manage/campus/exist.do',
+		            async:false,
+		            data:validParam,
+		            dataType:"json",
+		            success:function(obj){
+		            	if (obj.ret == 0){
+		            		//存在
+		            		validRet = true;
+			            }else{
+			            	validRet = false;
+			            } 
+		           }
+		        });
+			}
+			if(validRet){
+				Common.alertWarning("该数据已存在，请检查！");
+				return;
+			}
+			var action = "";
+			if(zzfwxq.editFlag){
+				// 因为自增长主键 编辑删掉再新增
+				zzfwxq.del(false,zzfwxq.rowIndex);
+			}
+			$.ajax({
+	            url:rootUrl+'/manage/campus/add.do',
+	            async:false,
+	            type:"post",
+	            data:data,
+	            dataType:"json",
+	            success:function(obj){
+	            	if (obj.ret == 0){
+		            	Common.alertSuccess("保存成功!");
+		            	zzfwxq.initTable();
+		            	$("#edit-window").window("close");
+		            }else{
+		                Common.alertWarning("保存失败!");
+		            }
+	           }
+	        });
+		}
+};
+16:33:04.851 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-base\zzfw-admin\src\main\webapp\resources\js\manage\campus\zzfwxq.js
+16:33:05.044 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:<%@page language="java" pageEncoding="UTF-8"%>
+
+<%@ include file="/views/common/taglibs.jsp"%>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>自助服务平台 - </title>
+<link rel="stylesheet" type="text/css"
+	href="${ctx}/resources/common/themes/default/easyui.css" />
+<link rel="stylesheet" type="text/css"
+	href="${ctx}/resources/common/themes/icon.css" />
+<link rel="stylesheet" type="text/css"
+	href="${ctx}/resources/css/showdialog.css" />
+<link rel="stylesheet" type="text/css"
+	href="${ctx}/resources/css/window-form-table.css" />
+<script type="text/javascript"
+	src="${ctx}/resources/js/common/jquery.easyui.min.js"></script>
+<script type="text/javascript"
+	src="${ctx}/resources/js/common/common.showdialog.js"></script>
+<script type="text/javascript"
+	src="${ctx}/resources/js/common/jquery.serializejson.js"></script>
+<script type="text/javascript"
+	src="${ctx}/resources/js/manage/common.js"></script>
+<script type="text/javascript"
+    src="${ctx}/resources/js/manage/campus/zzfwxq.js"></script>
+<script type="text/javascript">
+    var rootUrl = "${ctx}";
+</script>
+</head>
+<body>
+	<div class="easyui-panel" title="">   
+        <table id="table" style="height: 600px;">
+			<thead>
+				<tr>
+							<th data-options="field:'xqdm',width:105,align:'center'">校区代码</th>
+							<th data-options="field:'bz',width:105,align:'center'">备注</th>
+							<th data-options="field:'lxdh',width:105,align:'center'">联系电话</th>
+							<th data-options="field:'px',width:105,align:'center'">排序</th>
+							<th data-options="field:'sfsy',width:105,align:'center'">是否使用 1是 0 否</th>
+							<th data-options="field:'xqdz',width:105,align:'center'">校区地址</th>
+							<th data-options="field:'xqgdzczz',width:105,align:'center'">校区固定资产总值</th>
+							<th data-options="field:'xqjxkysbzz',width:105,align:'center'">校区教学科研设备总值</th>
+							<th data-options="field:'xqjzmj',width:105,align:'center'">校区建筑面积</th>
+							<th data-options="field:'xqmc',width:105,align:'center'">校区名称</th>
+							<th data-options="field:'xqyb',width:105,align:'center'">校区邮编</th>
+							<th data-options="field:'xxmj',width:105,align:'center'">校区面积</th>
+							<th data-options="field:'xqfzr',width:105,align:'center'">校区负责人</th>
+							<th data-options="field:'xxxzqhdm',width:105,align:'center'">学校行政区划代码</th>
+							<th data-options="field:'csmc',width:105,align:'center'">当前校区所在城市名如：南京、北京</th>
+							<th data-options="field:'lng',width:105,align:'center'">经度</th>
+							<th data-options="field:'lat',width:105,align:'center'">纬度</th>
+					<th data-options="field:'operation',width:94,align:'center',formatter:formatOperation"></th>
+				</tr>
+			</thead>
+		</table>
+		<div id="toolbar" style="height:auto;padding:0">
+			<div style="padding:2px;">
+				<form id="searchForm">
+					<table style="width: 100%;height: auto;" border="0">
+						<tr>
+									<td align="right">校区代码：</td>
+									<td align="left" width="166">
+										<input id="xqdm" name="xqdm" style="height:18px;width: 148px;" class="easyui-validatebox textbox">
+									</td>
+									<td align="right">校区名称：</td>
+									<td align="left" width="166">
+										<input id="xqmc" name="xqmc" style="height:18px;width: 148px;" class="easyui-validatebox textbox">
+									</td>
+									<td align="right">当前校区所在城市名如：南京、北京：</td>
+									<td align="left" width="166">
+										<input id="csmc" name="csmc" style="height:18px;width: 148px;" class="easyui-validatebox textbox">
+									</td>
+							<td align="right" colspan="2" style="padding-right: 51px;"><a href="javascript:void(0)"
+								class="easyui-linkbutton" icon="icon-search"
+								onclick="zzfwxq.initTable()" style="width: 60px;">查询</a></td>
+						</tr>
+					</table>
+				</form>
+			</div>
+			<div style="border-top:1px solid #dddddd;padding:2px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" 
+				data-options="iconCls:'icon-add',plain:true" onclick="zzfwxq.showEdit(false)">新增</a>
+			</div>
+		</div>
+		<div id="edit-window" title="详情" class="easyui-window"
+			data-options="modal:true,closed:true"
+			style="width:500px;height:530px;padding:5px">
+			<div class="easyui-layout" data-options="fit:true">
+				<div data-options="region:'center'" style="padding:0;border:0">
+					<form id="editForm" data-options="novalidate:true">
+						<input type="hidden" id='wid' name='wid'/>
+						<table class="window-form-table">
+									<tr>
+										<td>校区代码:</td>
+										<td><input id="xqdm" name="xqdm"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>备注:</td>
+										<td><input id="bz" name="bz"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>联系电话:</td>
+										<td><input id="lxdh" name="lxdh"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>排序:</td>
+										<td><input id="px" name="px"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>是否使用 1是 0 否:</td>
+										<td><input id="sfsy" name="sfsy"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>校区地址:</td>
+										<td><input id="xqdz" name="xqdz"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>校区固定资产总值:</td>
+										<td><input id="xqgdzczz" name="xqgdzczz"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>校区教学科研设备总值:</td>
+										<td><input id="xqjxkysbzz" name="xqjxkysbzz"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>校区建筑面积:</td>
+										<td><input id="xqjzmj" name="xqjzmj"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>校区名称:</td>
+										<td><input id="xqmc" name="xqmc"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>校区邮编:</td>
+										<td><input id="xqyb" name="xqyb"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>校区面积:</td>
+										<td><input id="xxmj" name="xxmj"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>校区负责人:</td>
+										<td><input id="xqfzr" name="xqfzr"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>学校行政区划代码:</td>
+										<td><input id="xxxzqhdm" name="xxxzqhdm"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>当前校区所在城市名如：南京、北京:</td>
+										<td><input id="csmc" name="csmc"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>经度:</td>
+										<td><input id="lng" name="lng"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>纬度:</td>
+										<td><input id="lat" name="lat"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+						</table>
+					</form>
+				</div>
+				<div data-options="region:'south',border:false"
+							style="text-align: center; padding: 5px;">
+					<a id="save" href="javascript:void(0)" onclick="zzfwxq.save()"
+						class="easyui-linkbutton" icon="icon-save">保存</a><a
+						href="javascript:void(0)"
+						onclick="$('#edit-window').window('close')"
+						class="easyui-linkbutton" icon="icon-cancel">关闭</a>
+				</div>
+			</div>
+		</div>
+	</div> 
+</body>
+</html>
+
+16:33:05.045 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-base\zzfw-admin\src\main\webapp\WEB-INF\views\manage\campus\zzfwxq.jsp
+16:33:05.048 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:package com.wisedu.zzfw.template.campus.model;
+
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.Min;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+/**
+ * 
+* @ClassName: ZzfwXqParam
+* @Description: ZzfwXq（校区对象）
+* @author  hyluan
+* @date 2017年12月18日 下午5:08:53
+* @Copyright: Copyright (c) 2017 wisedu
+ */
+@ApiModel("ZzfwXqParam （ZzfwXq（校区对象））")
+public class ZzfwXqParam extends ZzfwXq {
+
+	private static final long serialVersionUID = 1L;
+
+	@ApiModelProperty(value = "每页长度", required = false)
+	@Min(1)
+	@Digits(integer = 100, fraction = 0)
+	private Integer rows;
+
+	@ApiModelProperty(value = "页码", required = false)
+	@Min(1)
+	@Digits(integer = 100, fraction = 0)
+	private Integer page;
+
+	public Integer getRows() {
+		return rows;
+	}
+
+	public void setRows(Integer rows) {
+		this.rows = rows;
+	}
+
+	public Integer getPage() {
+		return page;
+	}
+
+	public void setPage(Integer page) {
+		this.page = page;
+	}
+	
+}
+
+16:33:05.049 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-interface\zzfw-template\src\main\java\com\wisedu\zzfw\template\campus\model\ZzfwXqParam.java
+16:33:05.055 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:package com.wisedu.zzfw.template.campus.service;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
+
+import com.wisedu.zzfw.template.campus.model.ZzfwXq;
+import com.wisedu.zzfw.template.campus.model.ZzfwXqParam;
+import com.wisedu.zzfw.template.common.model.ResponseList;
+import com.wisedu.zzfw.template.common.service.AbstractCommonService;
+import com.wisedu.zzfw.template.common.util.JacksonUtil;
+
+import tk.mybatis.mapper.common.Mapper;
+import tk.mybatis.mapper.entity.Example;
+import tk.mybatis.mapper.entity.Example.Criteria;
+
+/**
+ * 
+* @ClassName: ZzfwXqService
+* @Description: ZzfwXq（校区对象）
+* @author  hyluan
+* @date 2017年12月18日 下午5:08:53
+* @Copyright: Copyright (c) 2017 wisedu
+ */
+@Service
+public class ZzfwXqService extends AbstractCommonService<ZzfwXq>{
+
+	public ZzfwXqService(@Qualifier("zzfwXqMapper") Mapper<ZzfwXq> mapper) {
+		super(mapper);
+	}
+
+	public ResponseList<ZzfwXq> selectPage(ZzfwXqParam zzfwXqParam){
+		PageHelper.startPage(zzfwXqParam.getPage(), zzfwXqParam.getRows());
+		Example example = new Example(ZzfwXq.class);
+		Criteria criteria = example.createCriteria();
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqdm())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQDM.javaFieldName(),"%"+zzfwXqParam.getXqdm()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getBz())){
+			  criteria.andLike(ZzfwXq.FieldEnum.BZ.javaFieldName(),"%"+zzfwXqParam.getBz()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getLxdh())){
+			  criteria.andLike(ZzfwXq.FieldEnum.LXDH.javaFieldName(),"%"+zzfwXqParam.getLxdh()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getPx())){
+			  criteria.andLike(ZzfwXq.FieldEnum.PX.javaFieldName(),"%"+zzfwXqParam.getPx()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getSfsy())){
+			  criteria.andLike(ZzfwXq.FieldEnum.SFSY.javaFieldName(),"%"+zzfwXqParam.getSfsy()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqdz())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQDZ.javaFieldName(),"%"+zzfwXqParam.getXqdz()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqgdzczz())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQGDZCZZ.javaFieldName(),"%"+zzfwXqParam.getXqgdzczz()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqjxkysbzz())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQJXKYSBZZ.javaFieldName(),"%"+zzfwXqParam.getXqjxkysbzz()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqjzmj())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQJZMJ.javaFieldName(),"%"+zzfwXqParam.getXqjzmj()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqmc())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQMC.javaFieldName(),"%"+zzfwXqParam.getXqmc()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqyb())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQYB.javaFieldName(),"%"+zzfwXqParam.getXqyb()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXxmj())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XXMJ.javaFieldName(),"%"+zzfwXqParam.getXxmj()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqfzr())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQFZR.javaFieldName(),"%"+zzfwXqParam.getXqfzr()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXxxzqhdm())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XXXZQHDM.javaFieldName(),"%"+zzfwXqParam.getXxxzqhdm()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getCsmc())){
+			  criteria.andLike(ZzfwXq.FieldEnum.CSMC.javaFieldName(),"%"+zzfwXqParam.getCsmc()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getLng())){
+			  criteria.andLike(ZzfwXq.FieldEnum.LNG.javaFieldName(),"%"+zzfwXqParam.getLng()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getLat())){
+			  criteria.andLike(ZzfwXq.FieldEnum.LAT.javaFieldName(),"%"+zzfwXqParam.getLat()+"%");
+		  }
+		
+		example.setOrderByClause(" px asc,csmc desc,xqmc desc ");
+		Page<ZzfwXq> data = (Page<ZzfwXq>)super.getMapper().selectByExample(example);
+		return JacksonUtil.getTableJSON(data.getTotal(), data);
+	}
+	
+	public ZzfwXq selectByPrimaryKey(String id) {
+		return super.selectByPrimaryKey(id);
+	}
+	
+	public int insertSelective(ZzfwXq zzfwXq) {
+		return super.insertSelective( zzfwXq);
+	}
+	
+	public int deleteByPrimaryKey(String id) {
+		return super.deleteByPrimaryKey(id);
+	}
+	
+	public int updateByPrimaryKey(ZzfwXq zzfwXq) {
+		return super.updateByPrimaryKey( zzfwXq);
+	}
+	
+	public int exist(ZzfwXq zzfwXq){
+		return super.selectCount(zzfwXq);
+	}
+
+
+}
+
+16:33:05.055 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-interface\zzfw-template\src\main\java\com\wisedu\zzfw\template\campus\service\ZzfwXqService.java
+16:33:05.060 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:--1、创建模块
+--创建第二级目录节点
+insert into ss_module (WID, NAME, MEMO, PARENT_WID, INDEXED, TYPE)
+values ('744831be07874a1589544665571bb53a', '校区管理', null,(select wid from ss_module p where p.name='字典表维护'),
+(select max(indexed)+1 from ss_module where parent_wid = (select wid from ss_module p where p.name='字典表维护')), '1');
+--二级目录添加URL
+delete from ss_modulepath where MODULE_WID = '744831be07874a1589544665571bb53a';
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('be0f98a597c94254b20a5a7939df4aa5', '744831be07874a1589544665571bb53a', '/manage/campus/view.do', '', 0);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('107bea60a5ab45f7ba2e909a660b81fd', '744831be07874a1589544665571bb53a', '/manage/campus/get.do', '', 1);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('ddf3dbf4820f49f79ba298b63a082c6e', '744831be07874a1589544665571bb53a', '/manage/campus/list.do', '', 1);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('777ac046a5384ebfbc5c4a76688e869d', '744831be07874a1589544665571bb53a', '/manage/campus/add.do', '', 1);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('ffded80d25714f3f86097e106839b695', '744831be07874a1589544665571bb53a', '/manage/campus/delete.do', '', 1);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('f6d3ddd2a47c44d1942fe856938d47d7', '744831be07874a1589544665571bb53a', '/manage/campus/update.do', '', 1);
+	insert into ss_modulepath (WID, MODULE_WID, PATH, MEMO, INDEXED)
+	values ('4f8e53c2f50e46cbaf5c015e9b005de4', '744831be07874a1589544665571bb53a', '/manage/campus/exist.do', '', 1);
+--2、创建菜单，默认菜单创建在实施人员权限下
+insert into ss_menuitem (WID, NAME, ICON_PATH, PATH, MODULE_WID, MENU_WID, MEMO, PARENT_WID, INDEXED)
+values ('d2e241a2caea480c87a86e72a858fbbb', '校区管理', null, null, '744831be07874a1589544665571bb53a',
+	 (select wid from ss_menu where role='实施管理员'), null, (select wid from ss_menuitem where name='字典表维护'), 
+	 (select max(indexed)+1 from ss_menuitem where parent_wid = (select wid from ss_menuitem where name='字典表维护')));
+commit;
+
+16:33:05.061 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-interface\zzfw-template\src\main\resources\sql\zzfwxq.sql
+16:33:05.061 [INFO ] [main] com.wisedu.zzfw.Application - 生成结束
+19:18:51.125 [INFO ] [main] com.wisedu.zzfw.Application - Starting Application on USER-20170608CU with PID 10660 (E:\workspace\crudGenerator\target\classes started by Administrator in E:\workspace\crudGenerator)
+19:18:51.134 [INFO ] [main] com.wisedu.zzfw.Application - No active profile set, falling back to default profiles: default
+19:18:51.204 [INFO ] [main] o.s.c.a.AnnotationConfigApplicationContext - Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@7fab6def: startup date [Tue Jan 02 19:18:51 CST 2018]; root of context hierarchy
+19:18:52.894 [INFO ] [main] o.s.u.f.SpringTemplateLoader - SpringTemplateLoader for FreeMarker: using resource loader [org.springframework.context.annotation.AnnotationConfigApplicationContext@7fab6def: startup date [Tue Jan 02 19:18:51 CST 2018]; root of context hierarchy] and template loader path [classpath:/templates/]
+19:18:58.475 [INFO ] [main] com.wisedu.zzfw.Application - 开始生成
+19:18:58.476 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 不启用 ServiceGenerator 生成器
+19:18:58.478 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 不启用 JspGenerator 生成器
+19:18:58.478 [INFO ] [main] com.wisedu.zzfw.Application - 生成结束
+19:20:13.520 [INFO ] [main] com.wisedu.zzfw.Application - Starting Application on USER-20170608CU with PID 10892 (E:\workspace\crudGenerator\target\classes started by Administrator in E:\workspace\crudGenerator)
+19:20:13.527 [INFO ] [main] com.wisedu.zzfw.Application - No active profile set, falling back to default profiles: default
+19:20:13.582 [INFO ] [main] o.s.c.a.AnnotationConfigApplicationContext - Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@2a11c960: startup date [Tue Jan 02 19:20:13 CST 2018]; root of context hierarchy
+19:20:15.075 [INFO ] [main] o.s.u.f.SpringTemplateLoader - SpringTemplateLoader for FreeMarker: using resource loader [org.springframework.context.annotation.AnnotationConfigApplicationContext@2a11c960: startup date [Tue Jan 02 19:20:13 CST 2018]; root of context hierarchy] and template loader path [classpath:/templates/]
+19:20:18.434 [INFO ] [main] com.wisedu.zzfw.Application - 开始生成
+19:20:24.808 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:package com.wisedu.zzfw.template.campus.service;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
+
+import com.wisedu.zzfw.template.campus.model.ZzfwXq;
+import com.wisedu.zzfw.template.campus.model.ZzfwXqParam;
+import com.wisedu.zzfw.template.common.model.ResponseList;
+import com.wisedu.zzfw.template.common.service.AbstractCommonService;
+import com.wisedu.zzfw.template.common.util.JacksonUtil;
+
+import tk.mybatis.mapper.common.Mapper;
+import tk.mybatis.mapper.entity.Example;
+import tk.mybatis.mapper.entity.Example.Criteria;
+
+/**
+ * 
+* @ClassName: ZzfwXqService
+* @Description: ZzfwXq（校区对象）
+* @author  hyluan
+* @date 2017年12月18日 下午5:08:53
+* @Copyright: Copyright (c) 2017 wisedu
+ */
+@Service
+public class ZzfwXqService extends AbstractCommonService<ZzfwXq>{
+
+	public ZzfwXqService(@Qualifier("zzfwXqMapper") Mapper<ZzfwXq> mapper) {
+		super(mapper);
+	}
+
+	public ResponseList<ZzfwXq> selectPage(ZzfwXqParam zzfwXqParam){
+		PageHelper.startPage(zzfwXqParam.getPage(), zzfwXqParam.getRows());
+		Example example = new Example(ZzfwXq.class);
+		Criteria criteria = example.createCriteria();
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqdm())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQDM.javaFieldName(),"%"+zzfwXqParam.getXqdm()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getBz())){
+			  criteria.andLike(ZzfwXq.FieldEnum.BZ.javaFieldName(),"%"+zzfwXqParam.getBz()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getLxdh())){
+			  criteria.andLike(ZzfwXq.FieldEnum.LXDH.javaFieldName(),"%"+zzfwXqParam.getLxdh()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getPx())){
+			  criteria.andLike(ZzfwXq.FieldEnum.PX.javaFieldName(),"%"+zzfwXqParam.getPx()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getSfsy())){
+			  criteria.andLike(ZzfwXq.FieldEnum.SFSY.javaFieldName(),"%"+zzfwXqParam.getSfsy()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqdz())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQDZ.javaFieldName(),"%"+zzfwXqParam.getXqdz()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqgdzczz())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQGDZCZZ.javaFieldName(),"%"+zzfwXqParam.getXqgdzczz()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqjxkysbzz())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQJXKYSBZZ.javaFieldName(),"%"+zzfwXqParam.getXqjxkysbzz()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqjzmj())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQJZMJ.javaFieldName(),"%"+zzfwXqParam.getXqjzmj()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqmc())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQMC.javaFieldName(),"%"+zzfwXqParam.getXqmc()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqyb())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQYB.javaFieldName(),"%"+zzfwXqParam.getXqyb()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXxmj())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XXMJ.javaFieldName(),"%"+zzfwXqParam.getXxmj()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXqfzr())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XQFZR.javaFieldName(),"%"+zzfwXqParam.getXqfzr()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getXxxzqhdm())){
+			  criteria.andLike(ZzfwXq.FieldEnum.XXXZQHDM.javaFieldName(),"%"+zzfwXqParam.getXxxzqhdm()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getCsmc())){
+			  criteria.andLike(ZzfwXq.FieldEnum.CSMC.javaFieldName(),"%"+zzfwXqParam.getCsmc()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getLng())){
+			  criteria.andLike(ZzfwXq.FieldEnum.LNG.javaFieldName(),"%"+zzfwXqParam.getLng()+"%");
+		  }
+		  if(!StringUtils.isEmpty(zzfwXqParam.getLat())){
+			  criteria.andLike(ZzfwXq.FieldEnum.LAT.javaFieldName(),"%"+zzfwXqParam.getLat()+"%");
+		  }
+		
+		example.setOrderByClause(" px asc,csmc desc,xqmc desc ");
+		Page<ZzfwXq> data = (Page<ZzfwXq>)super.getMapper().selectByExample(example);
+		return JacksonUtil.getTableJSON(data.getTotal(), data);
+	}
+	
+	public ZzfwXq selectByPrimaryKey(String id) {
+		return super.selectByPrimaryKey(id);
+	}
+	
+	public int insertSelective(ZzfwXq zzfwXq) {
+		return super.insertSelective( zzfwXq);
+	}
+	
+	public int deleteByPrimaryKey(String id) {
+		return super.deleteByPrimaryKey(id);
+	}
+	
+	public int updateByPrimaryKey(ZzfwXq zzfwXq) {
+		return super.updateByPrimaryKey( zzfwXq);
+	}
+	
+	public int exist(ZzfwXq zzfwXq){
+		return super.selectCount(zzfwXq);
+	}
+
+
+}
+
+19:20:24.810 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-interface\zzfw-template\src\main\java\com\wisedu\zzfw\template\campus\service\ZzfwXqService.java
+19:20:27.205 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件content:<%@page language="java" pageEncoding="UTF-8"%>
+
+<%@ include file="/views/common/taglibs.jsp"%>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>自助服务平台 - </title>
+<link rel="stylesheet" type="text/css"
+	href="${ctx}/resources/common/themes/default/easyui.css" />
+<link rel="stylesheet" type="text/css"
+	href="${ctx}/resources/common/themes/icon.css" />
+<link rel="stylesheet" type="text/css"
+	href="${ctx}/resources/css/showdialog.css" />
+<link rel="stylesheet" type="text/css"
+	href="${ctx}/resources/css/window-form-table.css" />
+<script type="text/javascript"
+	src="${ctx}/resources/js/common/jquery.easyui.min.js"></script>
+<script type="text/javascript"
+	src="${ctx}/resources/js/common/common.showdialog.js"></script>
+<script type="text/javascript"
+	src="${ctx}/resources/js/common/jquery.serializejson.js"></script>
+<script type="text/javascript"
+	src="${ctx}/resources/js/manage/common.js"></script>
+<script type="text/javascript"
+    src="${ctx}/resources/js/manage/campus/zzfwxq.js"></script>
+<script type="text/javascript">
+    var rootUrl = "${ctx}";
+</script>
+</head>
+<body>
+	<div class="easyui-panel" title="">   
+        <table id="table" style="height: 600px;">
+			<thead>
+				<tr>
+							<th data-options="field:'xqdm',width:105,align:'center'">校区代码</th>
+							<th data-options="field:'bz',width:105,align:'center'">备注</th>
+							<th data-options="field:'lxdh',width:105,align:'center'">联系电话</th>
+							<th data-options="field:'px',width:105,align:'center'">排序</th>
+							<th data-options="field:'sfsy',width:105,align:'center'">是否使用 1是 0 否</th>
+							<th data-options="field:'xqdz',width:105,align:'center'">校区地址</th>
+							<th data-options="field:'xqgdzczz',width:105,align:'center'">校区固定资产总值</th>
+							<th data-options="field:'xqjxkysbzz',width:105,align:'center'">校区教学科研设备总值</th>
+							<th data-options="field:'xqjzmj',width:105,align:'center'">校区建筑面积</th>
+							<th data-options="field:'xqmc',width:105,align:'center'">校区名称</th>
+							<th data-options="field:'xqyb',width:105,align:'center'">校区邮编</th>
+							<th data-options="field:'xxmj',width:105,align:'center'">校区面积</th>
+							<th data-options="field:'xqfzr',width:105,align:'center'">校区负责人</th>
+							<th data-options="field:'xxxzqhdm',width:105,align:'center'">学校行政区划代码</th>
+							<th data-options="field:'csmc',width:105,align:'center'">当前校区所在城市名如：南京、北京</th>
+							<th data-options="field:'lng',width:105,align:'center'">经度</th>
+							<th data-options="field:'lat',width:105,align:'center'">纬度</th>
+					<th data-options="field:'operation',width:94,align:'center',formatter:formatOperation"></th>
+				</tr>
+			</thead>
+		</table>
+		<div id="toolbar" style="height:auto;padding:0">
+			<div style="padding:2px;">
+				<form id="searchForm">
+					<table style="width: 100%;height: auto;" border="0">
+						<tr>
+									<td align="right">校区代码：</td>
+									<td align="left" width="166">
+										<input id="xqdm" name="xqdm" style="height:18px;width: 148px;" class="easyui-validatebox textbox">
+									</td>
+									<td align="right">校区名称：</td>
+									<td align="left" width="166">
+										<input id="xqmc" name="xqmc" style="height:18px;width: 148px;" class="easyui-validatebox textbox">
+									</td>
+									<td align="right">当前校区所在城市名如：南京、北京：</td>
+									<td align="left" width="166">
+										<input id="csmc" name="csmc" style="height:18px;width: 148px;" class="easyui-validatebox textbox">
+									</td>
+							<td align="right" colspan="2" style="padding-right: 51px;"><a href="javascript:void(0)"
+								class="easyui-linkbutton" icon="icon-search"
+								onclick="zzfwxq.initTable()" style="width: 60px;">查询</a></td>
+						</tr>
+					</table>
+				</form>
+			</div>
+			<div style="border-top:1px solid #dddddd;padding:2px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" 
+				data-options="iconCls:'icon-add',plain:true" onclick="zzfwxq.showEdit(false)">新增</a>
+			</div>
+		</div>
+		<div id="edit-window" title="详情" class="easyui-window"
+			data-options="modal:true,closed:true"
+			style="width:500px;height:530px;padding:5px">
+			<div class="easyui-layout" data-options="fit:true">
+				<div data-options="region:'center'" style="padding:0;border:0">
+					<form id="editForm" data-options="novalidate:true">
+						<input type="hidden" id='wid' name='wid'/>
+						<table class="window-form-table">
+									<tr>
+										<td>校区代码:</td>
+										<td><input id="xqdm" name="xqdm"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>备注:</td>
+										<td><input id="bz" name="bz"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>联系电话:</td>
+										<td><input id="lxdh" name="lxdh"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>排序:</td>
+										<td><input id="px" name="px"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>是否使用 1是 0 否:</td>
+										<td><input id="sfsy" name="sfsy"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>校区地址:</td>
+										<td><input id="xqdz" name="xqdz"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>校区固定资产总值:</td>
+										<td><input id="xqgdzczz" name="xqgdzczz"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>校区教学科研设备总值:</td>
+										<td><input id="xqjxkysbzz" name="xqjxkysbzz"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>校区建筑面积:</td>
+										<td><input id="xqjzmj" name="xqjzmj"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>校区名称:</td>
+										<td><input id="xqmc" name="xqmc"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>校区邮编:</td>
+										<td><input id="xqyb" name="xqyb"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>校区面积:</td>
+										<td><input id="xxmj" name="xxmj"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>校区负责人:</td>
+										<td><input id="xqfzr" name="xqfzr"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>学校行政区划代码:</td>
+										<td><input id="xxxzqhdm" name="xxxzqhdm"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+										</td>
+									</tr>
+									<tr>
+										<td>当前校区所在城市名如：南京、北京:</td>
+										<td><input id="csmc" name="csmc"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>经度:</td>
+										<td><input id="lng" name="lng"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+									<tr>
+										<td>纬度:</td>
+										<td><input id="lat" name="lat"
+											class="textbox easyui-validatebox"
+											style="width:220px;height:19px;" /> 
+												<font color="red">(*)</font>
+										</td>
+									</tr>
+						</table>
+					</form>
+				</div>
+				<div data-options="region:'south',border:false"
+							style="text-align: center; padding: 5px;">
+					<a id="save" href="javascript:void(0)" onclick="zzfwxq.save()"
+						class="easyui-linkbutton" icon="icon-save">保存</a><a
+						href="javascript:void(0)"
+						onclick="$('#edit-window').window('close')"
+						class="easyui-linkbutton" icon="icon-cancel">关闭</a>
+				</div>
+			</div>
+		</div>
+	</div> 
+</body>
+</html>
+
+19:20:27.205 [INFO ] [main] c.w.zzfw.generator.AbstractGenerator - 生成文件路径：E:\workspace\zzfw-pack\zzfw-base\zzfw-admin\src\main\webapp\WEB-INF\views\manage\campus\zzfwxq.jsp
+19:20:27.205 [INFO ] [main] com.wisedu.zzfw.Application - 生成结束
+19:21:30.892 [INFO ] [main] com.wisedu.zzfw.Application - Starting Application on USER-20170608CU with PID 11204 (E:\workspace\crudGenerator\target\classes started by Administrator in E:\workspace\crudGenerator)
+19:21:30.900 [INFO ] [main] com.wisedu.zzfw.Application - No active profile set, falling back to default profiles: default
+19:21:30.951 [INFO ] [main] o.s.c.a.AnnotationConfigApplicationContext - Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@4119c916: startup date [Tue Jan 02 19:21:30 CST 2018]; root of context hierarchy
+19:21:32.492 [INFO ] [main] o.s.u.f.SpringTemplateLoader - SpringTemplateLoader for FreeMarker: using resource loader [org.springframework.context.annotation.AnnotationConfigApplicationContext@4119c916: startup date [Tue Jan 02 19:21:30 CST 2018]; root of context hierarchy] and template loader path [classpath:/templates/]
+19:23:53.922 [INFO ] [main] com.wisedu.zzfw.Application - Starting Application on USER-20170608CU with PID 4608 (E:\workspace\crudGenerator\target\classes started by Administrator in E:\workspace\crudGenerator)
+19:23:53.929 [INFO ] [main] com.wisedu.zzfw.Application - No active profile set, falling back to default profiles: default
+19:23:53.994 [INFO ] [main] o.s.c.a.AnnotationConfigApplicationContext - Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@650f9644: startup date [Tue Jan 02 19:23:53 CST 2018]; root of context hierarchy
+19:23:55.923 [INFO ] [main] o.s.u.f.SpringTemplateLoader - SpringTemplateLoader for FreeMarker: using resource loader [org.springframework.context.annotation.AnnotationConfigApplicationContext@650f9644: startup date [Tue Jan 02 19:23:53 CST 2018]; root of context hierarchy] and template loader path [classpath:/templates/]
+19:23:55.954 [WARN ] [main] o.s.c.a.AnnotationConfigApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'application': Unsatisfied dependency expressed through field 'builders'; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'builderAutoConfigation': Unsatisfied dependency expressed through field 'generatorProperties'; nested exception is org.springframework.beans.factory.NoUniqueBeanDefinitionException: No qualifying bean of type 'com.wisedu.zzfw.GeneratorProperties' available: expected single matching bean but found 2: generatorPropertiesWarpper,crudgen-com.wisedu.zzfw.GeneratorProperties
+19:23:55.991 [INFO ] [main] o.s.b.a.l.AutoConfigurationReportLoggingInitializer - 
+
+Error starting ApplicationContext. To display the auto-configuration report re-run your application with 'debug' enabled.
+19:23:55.997 [ERROR] [main] o.s.b.d.LoggingFailureAnalysisReporter - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Field generatorProperties in com.wisedu.zzfw.autoconfigation.BuilderAutoConfigation required a single bean, but 2 were found:
+	- generatorPropertiesWarpper: defined in file [E:\workspace\crudGenerator\target\classes\com\wisedu\zzfw\GeneratorPropertiesWarpper.class]
+	- crudgen-com.wisedu.zzfw.GeneratorProperties: defined in null
+
+
+Action:
+
+Consider marking one of the beans as @Primary, updating the consumer to accept multiple beans, or using @Qualifier to identify the bean that should be consumed
+
+19:25:10.982 [INFO ] [main] com.wisedu.zzfw.Application - Starting Application on USER-20170608CU with PID 10060 (E:\workspace\crudGenerator\target\classes started by Administrator in E:\workspace\crudGenerator)
+19:25:10.989 [INFO ] [main] com.wisedu.zzfw.Application - No active profile set, falling back to default profiles: default
+19:25:11.048 [INFO ] [main] o.s.c.a.AnnotationConfigApplicationContext - Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@310ecc43: startup date [Tue Jan 02 19:25:11 CST 2018]; root of context hierarchy
+19:25:12.563 [INFO ] [main] o.s.u.f.SpringTemplateLoader - SpringTemplateLoader for FreeMarker: using resource loader [org.springframework.context.annotation.AnnotationConfigApplicationContext@310ecc43: startup date [Tue Jan 02 19:25:11 CST 2018]; root of context hierarchy] and template loader path [classpath:/templates/]
+19:25:12.571 [WARN ] [main] o.s.c.a.AnnotationConfigApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'application': Unsatisfied dependency expressed through field 'builders'; nested exception is org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'builderAutoConfigation' defined in file [E:\workspace\crudGenerator\target\classes\com\wisedu\zzfw\autoconfigation\BuilderAutoConfigation.class]: Unsatisfied dependency expressed through constructor parameter 0; nested exception is org.springframework.beans.factory.NoUniqueBeanDefinitionException: No qualifying bean of type 'com.wisedu.zzfw.GeneratorProperties' available: expected single matching bean but found 2: generatorPropertiesWarpper,crudgen-com.wisedu.zzfw.GeneratorProperties
+19:25:12.601 [INFO ] [main] o.s.b.a.l.AutoConfigurationReportLoggingInitializer - 
+
+Error starting ApplicationContext. To display the auto-configuration report re-run your application with 'debug' enabled.
+19:25:12.607 [ERROR] [main] o.s.b.d.LoggingFailureAnalysisReporter - 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Parameter 0 of constructor in com.wisedu.zzfw.autoconfigation.BuilderAutoConfigation required a single bean, but 2 were found:
+	- generatorPropertiesWarpper: defined in file [E:\workspace\crudGenerator\target\classes\com\wisedu\zzfw\GeneratorPropertiesWarpper.class]
+	- crudgen-com.wisedu.zzfw.GeneratorProperties: defined in null
+
+
+Action:
+
+Consider marking one of the beans as @Primary, updating the consumer to accept multiple beans, or using @Qualifier to identify the bean that should be consumed
+
+19:28:21.698 [INFO ] [main] com.wisedu.zzfw.Application - Starting Application on USER-20170608CU with PID 11036 (E:\workspace\crudGenerator\target\classes started by Administrator in E:\workspace\crudGenerator)
+19:28:21.706 [INFO ] [main] com.wisedu.zzfw.Application - No active profile set, falling back to default profiles: default
+19:28:21.776 [INFO ] [main] o.s.c.a.AnnotationConfigApplicationContext - Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@4119c916: startup date [Tue Jan 02 19:28:21 CST 2018]; root of context hierarchy
+19:28:23.503 [INFO ] [main] o.s.u.f.SpringTemplateLoader - SpringTemplateLoader for FreeMarker: using resource loader [org.springframework.context.annotation.AnnotationConfigApplicationContext@4119c916: startup date [Tue Jan 02 19:28:21 CST 2018]; root of context hierarchy] and template loader path [classpath:/templates/]
+19:28:47.033 [INFO ] [main] com.wisedu.zzfw.Application - Starting Application on USER-20170608CU with PID 10300 (E:\workspace\crudGenerator\target\classes started by Administrator in E:\workspace\crudGenerator)
+19:28:47.042 [INFO ] [main] com.wisedu.zzfw.Application - No active profile set, falling back to default profiles: default
+19:28:47.094 [INFO ] [main] o.s.c.a.AnnotationConfigApplicationContext - Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@3e0e4be: startup date [Tue Jan 02 19:28:47 CST 2018]; root of context hierarchy
+19:28:48.568 [INFO ] [main] o.s.u.f.SpringTemplateLoader - SpringTemplateLoader for FreeMarker: using resource loader [org.springframework.context.annotation.AnnotationConfigApplicationContext@3e0e4be: startup date [Tue Jan 02 19:28:47 CST 2018]; root of context hierarchy] and template loader path [classpath:/templates/]
+19:29:48.387 [INFO ] [main] com.wisedu.zzfw.Application - Starting Application on USER-20170608CU with PID 9028 (E:\workspace\crudGenerator\target\classes started by Administrator in E:\workspace\crudGenerator)
+19:29:48.395 [INFO ] [main] com.wisedu.zzfw.Application - No active profile set, falling back to default profiles: default
+19:29:48.453 [INFO ] [main] o.s.c.a.AnnotationConfigApplicationContext - Refreshing org.springframework.context.annotation.AnnotationConfigApplicationContext@ce61a90: startup date [Tue Jan 02 19:29:48 CST 2018]; root of context hierarchy
+19:29:50.241 [INFO ] [main] o.s.u.f.SpringTemplateLoader - SpringTemplateLoader for FreeMarker: using resource loader [org.springframework.context.annotation.AnnotationConfigApplicationContext@ce61a90: startup date [Tue Jan 02 19:29:48 CST 2018]; root of context hierarchy] and template loader path [classpath:/templates/]

@@ -1,0 +1,28 @@
+crudgen:
+  java-project-path: E://workspace//zzfw-pack//zzfw-interface//zzfw-template #生成的工程路径
+  mybatis-generator-config-path: //src//main//resources//generator//generatorConfig.xml #Mybatis生成工具相对路径
+  view-project-path: E://workspace//zzfw-pack//zzfw-base//zzfw-admin #视图生成的工程路径
+  controller-enabled: false #是否生成controller
+  service-enabled: true #是否生成服务
+  page-model-param-enabled: true #是否生成分页模型参数
+  sql-enabled: true #是否生成sql
+  jsp-enabled: true #是否生成jsp
+  js-enabled: true #是否生成js
+  model-attributes:
+    - model-name: ZzfwXq #model名称
+      java-attributes:
+        model-package: com.wisedu.zzfw.template.campus.model #model包路径
+        service-package: com.wisedu.zzfw.template.campus.service #service包路径
+        controller-package: com.wisedu.zzfw.campus.web #controller包路径
+        controller-path: manage/campus #controller requestMapping路径
+      page-attributes:
+        query-columns: xqdm,xqmc,csmc #-页面查询条件字段
+        query-order-sql: px asc,csmc desc,xqmc desc #排序字段,格式为sql中order by 后的内容
+        required-columns: xqdm,xqmc,csmc,xqdz,lxdh,sfsy,lng,lat #form表单必填字段
+        valid-exists-columns: xqdm #校验数据重复字段
+        jsp-path: manage/campus #jsp文件相对路径
+      menu-attributes:
+        module-name: 校区管理 #模块名称
+        parent-module-name: 字典表维护 #父模块名称
+        role-name: 实施管理员 #角色名称
+        
